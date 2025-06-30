@@ -1,10 +1,12 @@
 package controllers;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -15,11 +17,7 @@ import entities.ParkingSubscriber;
 import server.DBController;
 import services.EmailService;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
-import java.sql.Date;
-import java.sql.Timestamp;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Enhanced ParkingController with email notifications Updated to work with
@@ -525,72 +523,111 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 	 * Handles parking entry with subscriber code (immediate parking)
 	 */
 	public String enterParking(String userName) {
-    // Get user ID
-    int userID = getUserID(userName);
-    if (userID == -1) {
-        return "Invalid user code";
-    }
-    
-    // VALIDATION 1: Check if user already has an active parking session
-    if (hasActiveParkingSession(userID)) {
-        return "You already have an active parking session. " +
-               "Please exit your current parking before starting a new one.";
-    }
+	    // Get user ID
+	    int userID = getUserID(userName);
+	    if (userID == -1) {
+	        return "Invalid user code";
+	    }
 
-    // VALIDATION 2: Check if user has preorder reservation for today
-    if (hasPreorderReservationForToday(userID)) {
-        return "You have a preorder reservation for today. " +
-               "Please use your reservation code to activate it, or cancel the reservation first.";
-    }
-    
-    LocalDateTime now = LocalDateTime.now();
-    LocalDateTime estimatedEnd = now.plusHours(4); // Default 4 hours
-    
-    // Check if ANY spots are available for the next 4 hours (no 40% rule)
-    int availableSpots = getAvailableSpotsForTimeSlot(now, estimatedEnd);
-    if (availableSpots <= 0) {
-        return "No parking spots available for immediate parking (all spots occupied or reserved)";
-    }
-    
-    // Find a spot that's free NOW and has no reservations for the next 4 hours
-    int spotID = findAvailableSpotForTimeSlot(now, estimatedEnd);
-    if (spotID == -1) {
-        return "No available parking spot found (all spots have upcoming reservations)";
-    }
-    
-    // Create parking info record for immediate parking
-    String qry = """
-        INSERT INTO parkinginfo
-        (ParkingSpot_ID, User_ID, Date_Of_Placing_Order, Actual_start_time,
-         Estimated_start_time, Estimated_end_time, IsOrderedEnum, IsLate, IsExtended, statusEnum)
-        VALUES (?, ?, NOW(), ?, ?, ?, 'no', 'no', 'no', 'active')
-        """;
-    
-    try (PreparedStatement stmt = conn.prepareStatement(qry, PreparedStatement.RETURN_GENERATED_KEYS)) {
-        stmt.setInt(1, spotID);
-        stmt.setInt(2, userID);
-        stmt.setTimestamp(3, Timestamp.valueOf(now));
-        stmt.setTimestamp(4, Timestamp.valueOf(now));
-        stmt.setTimestamp(5, Timestamp.valueOf(estimatedEnd));
-        stmt.executeUpdate();
-        
-        // Get the generated ParkingInfo_ID (parking code)
-        try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-            if (generatedKeys.next()) {
-                int parkingCode = generatedKeys.getInt(1);
-                
-                // Mark parking spot as occupied
-                updateParkingSpotStatus(spotID, true);
-                
-                return "Entry successful. Parking code: " + parkingCode + ". Spot: " + spotID;
-            }
-        }
-    } catch (SQLException e) {
-        System.out.println("Error handling entry: " + e.getMessage());
-        return "Entry failed";
-    }
-    return "Entry failed";
-}
+	    // VALIDATION 1: Check if user already has an active parking session
+	    if (hasActiveParkingSession(userID)) {
+	        return "You already have an active parking session. " +
+	               "Please exit your current parking before starting a new one.";
+	    }
+
+	    // VALIDATION 2: Check if user has preorder reservation for today
+	    if (hasPreorderReservationForToday(userID)) {
+	        return "You have a preorder reservation for today. " +
+	               "Please use your reservation code to activate it, or cancel the reservation first.";
+	    }
+
+	    LocalDateTime now = LocalDateTime.now();
+	    LocalDateTime estimatedEnd = now.plusHours(4); // Default 4 hours
+
+	    // Check if ANY spots are available for the next 4 hours (no 40% rule)
+	    int availableSpots = getAvailableSpotsForTimeSlot(now, estimatedEnd);
+	    if (availableSpots <= 0) {
+	        return "No parking spots available for immediate parking (all spots occupied or reserved)";
+	    }
+
+	    // Find a spot that's free NOW and has no reservations for the next 4 hours
+	    int spotID = findAvailableSpotForTimeSlot(now, estimatedEnd);
+	    if (spotID == -1) {
+	        return "No available parking spot found (all spots have upcoming reservations)";
+	    }
+
+	    // Create parking info record for immediate parking
+	    String qry = """
+	        INSERT INTO parkinginfo
+	        (ParkingSpot_ID, User_ID, Date_Of_Placing_Order, Actual_start_time,
+	         Estimated_start_time, Estimated_end_time, IsOrderedEnum, IsLate, IsExtended, statusEnum)
+	        VALUES (?, ?, NOW(), ?, ?, ?, 'no', 'no', 'no', 'active')
+	        """;
+
+	    try (PreparedStatement stmt = conn.prepareStatement(qry, PreparedStatement.RETURN_GENERATED_KEYS)) {
+	        stmt.setInt(1, spotID);
+	        stmt.setInt(2, userID);
+	        stmt.setTimestamp(3, Timestamp.valueOf(now));
+	        stmt.setTimestamp(4, Timestamp.valueOf(now));
+	        stmt.setTimestamp(5, Timestamp.valueOf(estimatedEnd));
+	        stmt.executeUpdate();
+
+	        // Get the generated ParkingInfo_ID (parking code)
+	        try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+	            if (generatedKeys.next()) {
+	                int parkingCode = generatedKeys.getInt(1);
+
+	                // Mark parking spot as occupied
+	                updateParkingSpotStatus(spotID, true);
+
+	                // ========== EMAIL NOTIFICATION - ADD THIS SECTION ==========
+	                // Send email notification for parking entry
+	                try {
+	                    String getUserEmailQry = "SELECT Email, Name FROM users WHERE User_ID = ?";
+	                    PreparedStatement emailStmt = conn.prepareStatement(getUserEmailQry);
+	                    emailStmt.setInt(1, userID);
+	                    ResultSet emailRs = emailStmt.executeQuery();
+	                    
+	                    if (emailRs.next()) {
+	                        String email = emailRs.getString("Email");
+	                        String name = emailRs.getString("Name");
+	                        
+	                     // Format date and time as strings
+	                        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+	                        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+	                        String dateStr = now.format(dateFormatter);
+	                        String timeStr = now.format(timeFormatter) + " - " + estimatedEnd.format(timeFormatter);
+
+	                        // Send parking confirmation email
+	                        EmailService.sendReservationConfirmation(
+	                            email,                          // recipientEmail
+	                            name,                           // customerName
+	                            String.valueOf(parkingCode),    // reservationCode
+	                            dateStr,                        // date (as String)
+	                            timeStr                         // time (as String)
+	                        );
+	                        
+	                        System.out.println("Parking entry email sent to: " + email);
+	                    }
+	                    
+	                    emailRs.close();
+	                    emailStmt.close();
+	                } catch (Exception emailEx) {
+	                    // Don't fail the parking entry if email fails
+	                    System.out.println("Warning: Could not send parking entry email: " + emailEx.getMessage());
+	                }
+	                // ========== END OF EMAIL NOTIFICATION ==========
+
+	                return "Entry successful. Parking code: " + parkingCode + ". Spot: " + spotID;
+	            }
+	        }
+	    } catch (SQLException e) {
+	        System.out.println("Error handling entry: " + e.getMessage());
+	        return "Entry failed";
+	    }
+	    return "Entry failed";
+	}
 
 	/**
 	 * Handles parking entry with reservation code - NOW SUPPORTS PREORDER->ACTIVE

@@ -26,17 +26,13 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.util.Duration;
-
-import javafx.animation.FadeTransition;
-import javafx.animation.Timeline;
-import javafx.animation.KeyFrame;
-import javafx.scene.control.Button;
 
 public class ManagerController implements Initializable {
 

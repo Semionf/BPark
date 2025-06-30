@@ -24,7 +24,7 @@ public class DBController {
 
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            String url = "jdbc:mysql://localhost/" + dbName + "?serverTimezone=IST";
+            String url = "jdbc:mysql://localhost/" + dbName + "?serverTimezone=Asia/Jerusalem";
             tempConnection = DriverManager.getConnection(url, "root", password);
             System.out.println("✅ Database connection established.");
             flag = 1;
