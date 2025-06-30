@@ -104,6 +104,21 @@
 								<Label fx:id="lblReservations" text="--"
 									style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #3498DB;" />
 							</VBox>
+							
+							<!-- Add Refresh Button -->
+							<VBox alignment="CENTER" spacing="5">
+								<padding>
+									<Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+								</padding>
+								<Button fx:id="btnRefresh" text="Refresh" onAction="#refreshParkingStatus" 
+									style="-fx-background-color: #3498DB; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-padding: 10 20;"
+									prefHeight="40">
+									<tooltip>
+										<Tooltip text="Refresh parking status data" />
+									</tooltip>
+								</Button>
+								<Label text="Update Now" style="-fx-text-fill: #7F8C8D; -fx-font-size: 11px;" />
+							</VBox>
 						</HBox>
 
 						<!-- Charts Section -->

@@ -22,6 +22,8 @@ import javafx.scene.control.Alert;
 
 import controllers.ParkingHistoryController;
 
+import controllers.SubscriberController;
+
 
 public class ClientMessageHandler {
 
@@ -180,11 +182,37 @@ public class ClientMessageHandler {
     }
     
     private static void handleParkingAvailability(Message message) {
-        Integer availableSpots = (Integer) message.getContent();
-        // Update UI with available spots
-        // This would typically update a label in the current screen
+    String statusData = (String) message.getContent();
+    
+    if (statusData.contains(",")) {
+        // New detailed format: "occupied,available,activeReservations"
+        String[] parts = statusData.split(",");
+        if (parts.length == 3) {
+            int occupied = Integer.parseInt(parts[0]);
+            int available = Integer.parseInt(parts[1]);
+            int activeReservations = Integer.parseInt(parts[2]);
+            
+            // Update manager dashboard
+            ManagerController managerController = BParkClientApp.getManagerController();
+            if (managerController != null) {
+                managerController.updateDetailedParkingStatus(occupied, available, activeReservations);
+            }
+        }
+    } else {
+        // Legacy format - just available spots
+        Integer availableSpots = Integer.parseInt(statusData);
         showAlert("Parking Availability", "Available spots: " + availableSpots);
     }
+    
+    // Also handle manual check for subscribers
+    if (SubscriberController.isManualCheckRequested()) {
+        String[] parts = statusData.split(",");
+        if (parts.length >= 2) {
+            showAlert("Parking Availability", "Available spots: " + parts[1]);
+        }
+        SubscriberController.setManualCheckRequested(false);
+    }
+}
     
     private static void handleReservationResponse(Message message) {
         String response = (String) message.getContent();

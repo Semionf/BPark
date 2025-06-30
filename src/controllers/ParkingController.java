@@ -18,6 +18,9 @@ import services.EmailService;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import java.sql.Date;
+import java.sql.Timestamp;
+
 /**
  * Enhanced ParkingController with email notifications Updated to work with
  * unified parkinginfo table structure
@@ -1655,6 +1658,94 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
         }
 
         return "Failed to update subscriber information";
+    }
+    /**
+     * Gets detailed parking status including occupied, available (considering time conflicts), and active reservations
+     * @return String with format "occupied,available,activeReservations"
+     */
+    public String getDetailedParkingStatus() {
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDate today = now.toLocalDate();
+            
+            // 1. Count occupied spots (active parking sessions)
+            String occupiedQuery = """
+                SELECT COUNT(DISTINCT ParkingSpot_ID) as occupied
+                FROM parkinginfo
+                WHERE statusEnum = 'active'
+                AND ParkingSpot_ID IS NOT NULL
+                """;
+            
+            int occupiedSpots = 0;
+            try (PreparedStatement stmt = conn.prepareStatement(occupiedQuery)) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        occupiedSpots = rs.getInt("occupied");
+                    }
+                }
+            }
+            
+            // 2. Count spots that are truly available (not occupied AND no conflicting preorders)
+            String conflictingQuery = """
+                SELECT DISTINCT ParkingSpot_ID
+                FROM parkinginfo
+                WHERE ParkingSpot_ID IS NOT NULL
+                AND (
+                    -- Active sessions
+                    statusEnum = 'active'
+                    OR
+                    -- Preorders that conflict with current time (±15 min window)
+                    (statusEnum = 'preorder' 
+                     AND Estimated_start_time <= ? 
+                     AND Estimated_end_time >= ?)
+                )
+                """;
+            
+            LocalDateTime windowStart = now.minusMinutes(15);
+            LocalDateTime windowEnd = now.plusMinutes(15);
+            
+            int conflictingSpots = 0;
+            try (PreparedStatement stmt = conn.prepareStatement(conflictingQuery)) {
+                stmt.setTimestamp(1, Timestamp.valueOf(windowEnd));
+                stmt.setTimestamp(2, Timestamp.valueOf(windowStart));
+                
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        conflictingSpots++;
+                    }
+                }
+            }
+            
+            int availableSpots = TOTAL_PARKING_SPOTS - conflictingSpots;
+            
+            // 3. Count active reservations (preorders scheduled for today)
+            String reservationsQuery = """
+                SELECT COUNT(*) as reservations
+                FROM parkinginfo
+                WHERE statusEnum = 'preorder'
+                AND DATE(Estimated_start_time) = ?
+                AND Estimated_start_time >= ?
+                """;
+            
+            int activeReservations = 0;
+            try (PreparedStatement stmt = conn.prepareStatement(reservationsQuery)) {
+                stmt.setDate(1, Date.valueOf(today));
+                stmt.setTimestamp(2, Timestamp.valueOf(now));
+                
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        activeReservations = rs.getInt("reservations");
+                    }
+                }
+            }
+            
+            // Return as comma-separated string
+            return String.format("%d,%d,%d", occupiedSpots, availableSpots, activeReservations);
+            
+        } catch (SQLException e) {
+            System.out.println("Error getting detailed parking status: " + e.getMessage());
+            return "0,0,0";
+        }
     }
 
 

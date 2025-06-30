@@ -156,10 +156,10 @@ public class ParkingServer extends AbstractServer {
 				break;
 
 			case CHECK_PARKING_AVAILABILITY:
-				int availableSpots = parkingController.getAvailableParkingSpots();
-				ret = new Message(MessageType.PARKING_AVAILABILITY_RESPONSE, availableSpots);
-				client.sendToClient(serialize(ret));
-				break;
+			    String detailedStatus = parkingController.getDetailedParkingStatus();
+			    ret = new Message(MessageType.PARKING_AVAILABILITY_RESPONSE, detailedStatus);
+			    client.sendToClient(serialize(ret));
+			    break;
 
 			case RESERVE_PARKING:
 				String[] reservationData = ((String) message.getContent()).split(",");

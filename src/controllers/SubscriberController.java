@@ -62,6 +62,9 @@ public class SubscriberController implements Initializable {
     public static void setManualCheckRequested(boolean value) {
         manualCheckRequested = value;
     }
+    public static boolean isManualCheckRequested() {
+        return manualCheckRequested;
+    }
     
     public void setUserName(String userName) {
         lblUserInfo.setText("User: " + userName);
