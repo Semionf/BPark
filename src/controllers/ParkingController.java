@@ -10,13 +10,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.Random;
-
-
 import entities.ParkingOrder;
 import entities.ParkingSubscriber;
 import server.DBController;
 import services.EmailService;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * Enhanced ParkingController with email notifications Updated to work with
@@ -263,10 +263,18 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
             return "Reservation cannot be more than 7 days in advance";
         }
 
-        // Get user ID
+     // Get user ID
         int userID = getUserID(userName);
         if (userID == -1) {
             return "User not found";
+        }
+
+        // NEW VALIDATION: Check if user already has an ACTIVE reservation for the same date
+        LocalDate reservationDate = reservationDateTime.toLocalDate();
+        if (!canMakeReservationForDate(userID, reservationDate)) {
+            return "You already have an active reservation for " + reservationDate + 
+                   ". Only one active reservation per day is allowed. " +
+                   "Previous reservations that were finished or cancelled do not count.";
         }
 
         // Calculate end time (default 4 hours)
@@ -329,6 +337,9 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 		DBController.initializeConnection(dbname, pass);
 		successFlag = DBController.getInstance().getSuccessFlag();
 		conn = DBController.getInstance().getConnection();
+		
+		 this.autoCancellationService = new SimpleAutoCancellationService(this);
+	     this.autoCancellationService.startService();
 
 	}
 
@@ -511,59 +522,72 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 	 * Handles parking entry with subscriber code (immediate parking)
 	 */
 	public String enterParking(String userName) {
-		// Get user ID
-		int userID = getUserID(userName);
-		if (userID == -1) {
-			return "Invalid user code";
-		}
+    // Get user ID
+    int userID = getUserID(userName);
+    if (userID == -1) {
+        return "Invalid user code";
+    }
+    
+    // VALIDATION 1: Check if user already has an active parking session
+    if (hasActiveParkingSession(userID)) {
+        return "You already have an active parking session. " +
+               "Please exit your current parking before starting a new one.";
+    }
 
-		// Check if spots are available
-		if (getAvailableParkingSpots() <= 0) {
-			return "No parking spots available";
-		}
-
-		// Find available parking spot
-		int spotID = getAvailableParkingSpotID();
-		if (spotID == -1) {
-			return "No available parking spot found";
-		}
-
-		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime estimatedEnd = now.plusHours(4); // Default 4 hours
-
-		// Create parking info record for immediate parking
-		String qry = """
-				INSERT INTO parkinginfo
-				(ParkingSpot_ID, User_ID, Date_Of_Placing_Order, Actual_start_time,
-				 Estimated_start_time, Estimated_end_time, IsOrderedEnum, IsLate, IsExtended, statusEnum)
-				VALUES (?, ?, NOW(), ?, ?, ?, 'no', 'no', 'no', 'active')
-				""";
-
-		try (PreparedStatement stmt = conn.prepareStatement(qry, PreparedStatement.RETURN_GENERATED_KEYS)) {
-			stmt.setInt(1, spotID);
-			stmt.setInt(2, userID);
-			stmt.setTimestamp(3, Timestamp.valueOf(now));
-			stmt.setTimestamp(4, Timestamp.valueOf(now));
-			stmt.setTimestamp(5, Timestamp.valueOf(estimatedEnd));
-			stmt.executeUpdate();
-
-			// Get the generated ParkingInfo_ID (parking code)
-			try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-				if (generatedKeys.next()) {
-					int parkingCode = generatedKeys.getInt(1);
-
-					// Mark parking spot as occupied
-					updateParkingSpotStatus(spotID, true);
-
-					return "Entry successful. Parking code: " + parkingCode + ". Spot: " + spotID;
-				}
-			}
-		} catch (SQLException e) {
-			System.out.println("Error handling entry: " + e.getMessage());
-			return "Entry failed";
-		}
-		return "Entry failed";
-	}
+    // VALIDATION 2: Check if user has preorder reservation for today
+    if (hasPreorderReservationForToday(userID)) {
+        return "You have a preorder reservation for today. " +
+               "Please use your reservation code to activate it, or cancel the reservation first.";
+    }
+    
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime estimatedEnd = now.plusHours(4); // Default 4 hours
+    
+    // Check if ANY spots are available for the next 4 hours (no 40% rule)
+    int availableSpots = getAvailableSpotsForTimeSlot(now, estimatedEnd);
+    if (availableSpots <= 0) {
+        return "No parking spots available for immediate parking (all spots occupied or reserved)";
+    }
+    
+    // Find a spot that's free NOW and has no reservations for the next 4 hours
+    int spotID = findAvailableSpotForTimeSlot(now, estimatedEnd);
+    if (spotID == -1) {
+        return "No available parking spot found (all spots have upcoming reservations)";
+    }
+    
+    // Create parking info record for immediate parking
+    String qry = """
+        INSERT INTO parkinginfo
+        (ParkingSpot_ID, User_ID, Date_Of_Placing_Order, Actual_start_time,
+         Estimated_start_time, Estimated_end_time, IsOrderedEnum, IsLate, IsExtended, statusEnum)
+        VALUES (?, ?, NOW(), ?, ?, ?, 'no', 'no', 'no', 'active')
+        """;
+    
+    try (PreparedStatement stmt = conn.prepareStatement(qry, PreparedStatement.RETURN_GENERATED_KEYS)) {
+        stmt.setInt(1, spotID);
+        stmt.setInt(2, userID);
+        stmt.setTimestamp(3, Timestamp.valueOf(now));
+        stmt.setTimestamp(4, Timestamp.valueOf(now));
+        stmt.setTimestamp(5, Timestamp.valueOf(estimatedEnd));
+        stmt.executeUpdate();
+        
+        // Get the generated ParkingInfo_ID (parking code)
+        try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+            if (generatedKeys.next()) {
+                int parkingCode = generatedKeys.getInt(1);
+                
+                // Mark parking spot as occupied
+                updateParkingSpotStatus(spotID, true);
+                
+                return "Entry successful. Parking code: " + parkingCode + ". Spot: " + spotID;
+            }
+        }
+    } catch (SQLException e) {
+        System.out.println("Error handling entry: " + e.getMessage());
+        return "Entry failed";
+    }
+    return "Entry failed";
+}
 
 	/**
 	 * Handles parking entry with reservation code - NOW SUPPORTS PREORDER->ACTIVE
@@ -1047,6 +1071,103 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 		}
 		return "Reservation not found or already cancelled/finished";
 	}
+	
+	/**
+	 * Check if user has ACTIVE reservation for the same date (preorder or active status)
+	 * This excludes finished and cancelled reservations, allowing new reservations
+	 * if previous ones are completed or cancelled
+	 */
+	private boolean hasActiveReservationForDate(int userID, LocalDate reservationDate) {
+	    String qry = """
+	        SELECT COUNT(*) as active_reservation_count 
+	        FROM parkinginfo 
+	        WHERE User_ID = ? 
+	        AND DATE(Estimated_start_time) = ? 
+	        AND statusEnum IN ('preorder', 'active')
+	        """;
+	    
+	    try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+	        stmt.setInt(1, userID);
+	        stmt.setDate(2, java.sql.Date.valueOf(reservationDate));
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt("active_reservation_count") > 0;
+	            }
+	        }
+	    } catch (SQLException e) {
+	        System.out.println("Error checking active reservation for date: " + e.getMessage());
+	    }
+	    return false;
+	}
+
+	/**
+	 * Check if user can make reservation for specific date
+	 * Only blocks if there's an active (preorder/active) reservation
+	 * Allows new reservations if previous ones are finished/cancelled
+	 */
+	private boolean canMakeReservationForDate(int userID, LocalDate reservationDate) {
+	    return !hasActiveReservationForDate(userID, reservationDate);
+	}
+
+	/**
+	 * Check if user has any active parking sessions
+	 */
+	private boolean hasActiveParkingSession(int userID) {
+	    String qry = """
+	        SELECT COUNT(*) as active_count 
+	        FROM parkinginfo 
+	        WHERE User_ID = ? 
+	        AND statusEnum = 'active'
+	        AND Actual_end_time IS NULL
+	        """;
+	    
+	    try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+	        stmt.setInt(1, userID);
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt("active_count") > 0;
+	            }
+	        }
+	    } catch (SQLException e) {
+	        System.out.println("Error checking active parking: " + e.getMessage());
+	    }
+	    return false;
+	}
+
+	/**
+	 * Check if user has a preorder reservation for today's date
+	 * This prevents immediate parking when user has a reservation for the same day
+	 */
+	private boolean hasPreorderReservationForToday(int userID) {
+	    LocalDate today = LocalDate.now();
+	    String qry = """
+	        SELECT COUNT(*) as preorder_count 
+	        FROM parkinginfo 
+	        WHERE User_ID = ? 
+	        AND DATE(Estimated_start_time) = ? 
+	        AND statusEnum = 'preorder'
+	        """;
+	    
+	    try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+	        stmt.setInt(1, userID);
+	        stmt.setDate(2, java.sql.Date.valueOf(today));
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt("preorder_count") > 0;
+	            }
+	        }
+	    } catch (SQLException e) {
+	        System.out.println("Error checking preorder reservation for today: " + e.getMessage());
+	    }
+	    return false;
+	}
+
+	/**
+	 * Check if user can make a new parking entry (no active sessions)
+	 */
+	private boolean canMakeNewParking(int userID) {
+	    return !hasActiveParkingSession(userID);
+	}
 
 	/**
 	 * Logs out a user (for future use if needed)
@@ -1102,20 +1223,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 		return -1;
 	}
 
-	private int getAvailableParkingSpotID() {
-		String qry = "SELECT ParkingSpot_ID FROM ParkingSpot WHERE isOccupied = false LIMIT 1";
-
-		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					return rs.getInt("ParkingSpot_ID");
-				}
-			}
-		} catch (SQLException e) {
-			System.out.println("Error getting available spot ID: " + e.getMessage());
-		}
-		return -1;
-	}
+	
 
 	private boolean isParkingSpotAvailable(int spotID) {
 		String qry = "SELECT isOccupied FROM ParkingSpot WHERE ParkingSpot_ID = ?";

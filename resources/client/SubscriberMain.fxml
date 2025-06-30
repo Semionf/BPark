@@ -175,22 +175,7 @@
                </VBox>
             </TitledPane>
             
-            <!-- Parking History Table -->
-            <TitledPane text="Recent Parking History" expanded="false">
-               <VBox spacing="10">
-                  <TableView fx:id="tableParkingHistory" prefHeight="200">
-                     <columns>
-                        <TableColumn fx:id="colDate" text="Date" prefWidth="100" />
-                        <TableColumn fx:id="colEntry" text="Entry Time" prefWidth="100" />
-                        <TableColumn fx:id="colExit" text="Exit Time" prefWidth="100" />
-                        <TableColumn fx:id="colSpot" text="Spot" prefWidth="80" />
-                        <TableColumn fx:id="colStatus" text="Status" prefWidth="100" />
-                     </columns>
-                  </TableView>
-                  
-                  <Button text="Load Full History" onAction="#handleViewHistory" />
-               </VBox>
-            </TitledPane>
+           
             
          </VBox>
       </ScrollPane>

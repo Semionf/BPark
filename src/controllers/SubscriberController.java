@@ -1,26 +1,29 @@
 package controllers;
 
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
-import javafx.scene.layout.GridPane;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 import client.BParkClientApp;
 import entities.Message;
 import entities.Message.MessageType;
-import entities.ParkingOrder;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DateCell;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.VBox;
+
 
 public class SubscriberController implements Initializable {
     
@@ -46,13 +49,6 @@ public class SubscriberController implements Initializable {
     @FXML private ComboBox<String> comboTimeSlot;
     @FXML private Label lblReservationStatus;
     
-    // Parking history table
-    @FXML private TableView<ParkingOrder> tableParkingHistory;
-    @FXML private TableColumn<ParkingOrder, String> colDate;
-    @FXML private TableColumn<ParkingOrder, String> colEntry;
-    @FXML private TableColumn<ParkingOrder, String> colExit;
-    @FXML private TableColumn<ParkingOrder, String> colSpot;
-    @FXML private TableColumn<ParkingOrder, String> colStatus;
     
     // Profile update
     @FXML private TextField txtPhone;
@@ -71,11 +67,14 @@ public class SubscriberController implements Initializable {
         lblUserInfo.setText("User: " + userName);
     }
     
-    private ObservableList<ParkingOrder> parkingHistory = FXCollections.observableArrayList();
+  
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setupUI();
+        if (BParkClientApp.getCurrentUser() != null) {
+            setUserName(BParkClientApp.getCurrentUser());
+        }
        
     }
     
@@ -103,11 +102,6 @@ public class SubscriberController implements Initializable {
             });
         }
         
-        // Setup parking history table
-        if (tableParkingHistory != null) {
-            tableParkingHistory.setItems(parkingHistory);
-            // Setup column cell value factories here
-        }
     }
     
 
@@ -202,8 +196,19 @@ public class SubscriberController implements Initializable {
     
     @FXML
     private void handleViewHistory() {
-        Message msg = new Message(MessageType.GET_PARKING_HISTORY, BParkClientApp.getCurrentUser());
-        BParkClientApp.sendMessage(msg);
+        try {
+            // Load the parking history view
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/ParkingHistoryView.fxml"));
+            Node historyView = loader.load();
+            
+            // Replace the main content with history view
+            mainContent.getChildren().setAll(historyView);
+            
+            // The controller will automatically request data on initialization
+        } catch (IOException e) {
+            e.printStackTrace();
+            showError("Error", "Failed to load parking history view");
+        }
     }
     
     @FXML
@@ -275,19 +280,13 @@ public class SubscriberController implements Initializable {
             
             // Update UI based on availability
             boolean canReserve = spots >= (100 * 0.4); // 40% rule
-            if (btnMakeReservation != null) {
-                btnMakeReservation.setDisable(!canReserve);
-            }
             if (lblReservationStatus != null && !canReserve) {
                 lblReservationStatus.setText("Reservations unavailable (less than 40% spots free)");
             }
         }
     }
     
-    public void updateParkingHistory(ObservableList<ParkingOrder> history) {
-        this.parkingHistory.clear();
-        this.parkingHistory.addAll(history);
-    }
+    
     
     // ===== Utility Methods =====
     

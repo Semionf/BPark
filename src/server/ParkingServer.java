@@ -307,6 +307,12 @@ public class ParkingServer extends AbstractServer {
 				client.sendToClient(response);
 				break;
 			}
+			case ENTER_PARKING:
+			    String enterUserName = (String) message.getContent();
+			    String enterResult = parkingController.enterParking(enterUserName);
+			    ret = new Message(MessageType.ENTER_PARKING_RESPONSE, enterResult);
+			    client.sendToClient(serialize(ret));
+			    break;
 
 			default:
 				System.out.println("Unknown message type: " + message.getType());

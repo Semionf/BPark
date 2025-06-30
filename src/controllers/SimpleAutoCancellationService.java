@@ -91,7 +91,6 @@ public class SimpleAutoCancellationService {
             FROM parkinginfo pi
             JOIN users u ON pi.User_ID = u.User_ID
             WHERE pi.statusEnum = 'preorder'
-            AND DATE(pi.Estimated_start_time) = CURDATE()
             AND pi.ParkingSpot_ID IS NOT NULL
             AND pi.Estimated_start_time IS NOT NULL
             AND TIMESTAMPDIFF(MINUTE, pi.Estimated_start_time, NOW()) >= ?

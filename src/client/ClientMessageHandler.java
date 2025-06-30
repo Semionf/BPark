@@ -20,6 +20,8 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.Alert;
 
+import controllers.ParkingHistoryController;
+
 
 public class ClientMessageHandler {
 
@@ -76,6 +78,10 @@ public class ClientMessageHandler {
             case CANCELLATION_RESPONSE:
                 handleCancellationResponse(message);
                 break;
+                
+            case ENTER_PARKING_RESPONSE:
+                handleEnterParkingResponse(message);
+                break;    
              
             case EXTENSION_RESPONSE:
             	handleExtendParkingResponse(message);
@@ -213,9 +219,19 @@ public class ClientMessageHandler {
     @SuppressWarnings("unchecked")
     private static void handleParkingHistory(Message message) {
         ArrayList<ParkingOrder> history = (ArrayList<ParkingOrder>) message.getContent();
+        
         // Update the parking history table in the UI
-        // This would typically be handled by the controller of the current screen
-        System.out.println("Received " + history.size() + " parking records");
+        Platform.runLater(() -> {
+            // Check if ParkingHistoryController is active
+            ParkingHistoryController historyController = ParkingHistoryController.getInstance();
+            if (historyController != null) {
+                historyController.updateParkingHistory(history);
+            }
+            
+            // Also update SubscriberController if needed (for the small table in main view)
+            // This is optional - remove if not needed
+            System.out.println("Received " + history.size() + " parking records");
+        });
     }
     
     @SuppressWarnings("unchecked")
@@ -355,5 +371,14 @@ public class ClientMessageHandler {
             alert.setContentText(content);
             alert.showAndWait();
         });
+    }
+    
+    private static void handleEnterParkingResponse(Message message) {
+        String response = (String) message.getContent();
+        if (response.contains("successful")) {
+            showAlert("Parking Entry Success", response);
+        } else {
+            showAlert("Parking Entry Failed", response);
+        }
     }
 }

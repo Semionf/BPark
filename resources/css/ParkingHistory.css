@@ -1,0 +1,129 @@
+/* Parking History View Styling */
+
+.root {
+    -fx-background-color: #ECF0F1;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* Header styling */
+.header-label {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C3E50;
+}
+
+/* Summary cards */
+.summary-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);
+}
+
+.summary-title {
+    -fx-font-size: 14px;
+    -fx-text-fill: #7F8C8D;
+}
+
+.summary-value {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+/* Button styling */
+.primary-button {
+    -fx-background-color: #3498DB;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 5;
+}
+
+.primary-button:hover {
+    -fx-background-color: #2980B9;
+}
+
+.secondary-button {
+    -fx-background-color: #95A5A6;
+    -fx-text-fill: white;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 5;
+}
+
+.secondary-button:hover {
+    -fx-background-color: #7F8C8D;
+}
+
+/* Table styling */
+.table-view {
+    -fx-background-color: white;
+    -fx-background-radius: 5;
+    -fx-padding: 0;
+}
+
+.table-view .column-header {
+    -fx-background-color: #34495E;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #34495E;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.table-view .column-header:hover {
+    -fx-background-color: #2C3E50;
+}
+
+.table-view .column-header-background .filler {
+    -fx-background-color: #34495E;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #F8F9FA;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #E3F2FD;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #3498DB;
+    -fx-text-fill: white;
+}
+
+/* ComboBox styling */
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #BDC3C7;
+    -fx-border-radius: 3;
+}
+
+/* Status colors */
+.status-active {
+    -fx-text-fill: #27AE60;
+    -fx-font-weight: bold;
+}
+
+.status-cancelled {
+    -fx-text-fill: #E74C3C;
+    -fx-font-weight: bold;
+}
+
+.status-preorder {
+    -fx-text-fill: #3498DB;
+    -fx-font-weight: bold;
+}
+
+.late-yes {
+    -fx-text-fill: #E74C3C;
+    -fx-font-weight: bold;
+}
+
+/* Empty table placeholder */
+.table-view .placeholder {
+    -fx-background-color: transparent;
+}
