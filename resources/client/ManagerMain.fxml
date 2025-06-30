@@ -9,7 +9,7 @@
 <BorderPane xmlns="http://javafx.com/javafx/11.0.1"
 	xmlns:fx="http://javafx.com/fxml/1"
 	fx:controller="controllers.ManagerController" prefHeight="800.0"
-	prefWidth="1200.0">
+	prefWidth="1200.0" stylesheets="@../css/ManagerMain.css">
 
 	<!-- Top Bar  -->
 	<top>
@@ -105,13 +105,13 @@
 									style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #3498DB;" />
 							</VBox>
 							
-							<!-- Add Refresh Button -->
+							<!-- Refresh Button with enhanced styling -->
 							<VBox alignment="CENTER" spacing="5">
 								<padding>
 									<Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
 								</padding>
 								<Button fx:id="btnRefresh" text="Refresh" onAction="#refreshParkingStatus" 
-									style="-fx-background-color: #3498DB; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-padding: 10 20;"
+									styleClass="refresh-button"
 									prefHeight="40">
 									<tooltip>
 										<Tooltip text="Refresh parking status data" />
@@ -142,13 +142,87 @@
 
 							<!-- Parking Types Pie Chart -->
 							<VBox spacing="10"
-								style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 15;">
-								<Label text="Parking Types"
+								style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 15;"
+								prefWidth="350">
+								<Label text="Parking Types Distribution"
 									style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-								<PieChart fx:id="parkingTypesChart" prefWidth="300"
-									prefHeight="300" />
+								<PieChart fx:id="parkingTypesChart" prefHeight="300"
+									animated="true" />
 							</VBox>
 						</HBox>
+
+						<!-- System Information -->
+						<TitledPane text="System Configuration" expanded="false">
+							<GridPane hgap="15" vgap="10">
+								<padding>
+									<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+								</padding>
+
+								<Label text="Total Parking Spots:"
+									GridPane.columnIndex="0" GridPane.rowIndex="0" />
+								<Label text="100" GridPane.columnIndex="1"
+									GridPane.rowIndex="0" />
+
+								<Label text="Auto-Cancellation Time:"
+									GridPane.columnIndex="0" GridPane.rowIndex="1" />
+								<Label text="15 minutes after scheduled time"
+									GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+								<Label text="Late Exit Grace Period:"
+									GridPane.columnIndex="0" GridPane.rowIndex="2" />
+								<Label text="10 minutes" GridPane.columnIndex="1"
+									GridPane.rowIndex="2" />
+							</GridPane>
+
+							<Label
+								text="Automatically cancels reservations 15 minutes after scheduled time if customer doesn't arrive"
+								wrapText="true" style="-fx-text-fill: #7F8C8D;" />
+						</TitledPane>
+
+						<!-- Monthly Report Generation -->
+						<TitledPane text="Monthly Reports" expanded="false">
+							<VBox spacing="10">
+								<padding>
+									<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+								</padding>
+
+								<HBox spacing="10" alignment="CENTER_LEFT">
+									<Label text="Select Month:" minWidth="100" />
+									<ComboBox fx:id="comboMonth" prefWidth="150" />
+									<ComboBox fx:id="comboYear" prefWidth="100" />
+									<Button text="Generate Monthly Reports"
+										onAction="#handleGenerateMonthlyReports" styleClass="primary-button" />
+								</HBox>
+
+								<Label
+									text="Reports are automatically generated at the end of each month"
+									style="-fx-text-fill: #7F8C8D;" />
+							</VBox>
+						</TitledPane>
+
+						<!-- System Statistics -->
+						<TitledPane text="System Statistics" expanded="false">
+							<GridPane hgap="15" vgap="10">
+								<padding>
+									<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+								</padding>
+
+								<Label text="Total Registered Users:"
+									GridPane.columnIndex="0" GridPane.rowIndex="0" />
+								<Label fx:id="lblTotalUsers" text="--"
+									GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+								<Label text="Peak Usage Hours:" GridPane.columnIndex="0"
+									GridPane.rowIndex="1" />
+								<Label fx:id="lblPeakHours" text="--"
+									GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+								<Label text="Average Daily Usage:" GridPane.columnIndex="0"
+									GridPane.rowIndex="2" />
+								<Label fx:id="lblAvgDailyUsage" text="--"
+									GridPane.columnIndex="1" GridPane.rowIndex="2" />
+							</GridPane>
+						</TitledPane>
 
 					</VBox>
 				</ScrollPane>
@@ -156,25 +230,26 @@
 
 			<!-- Tab 2: Reports -->
 			<Tab text="Reports">
-				<VBox spacing="20">
+				<VBox spacing="15">
 					<padding>
-						<Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+						<Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
 					</padding>
 
-					<HBox spacing="20" alignment="CENTER_LEFT">
-						<Label text="Report Generation"
-							style="-fx-font-size: 20px; -fx-font-weight: bold;" />
-						<Region HBox.hgrow="ALWAYS" />
-						<ComboBox fx:id="comboReportType"
-							promptText="Select Report Type" />
-						<DatePicker fx:id="datePickerFrom"
-							promptText="From Date" />
-						<DatePicker fx:id="datePickerTo" promptText="To Date" />
-						<Button text="Generate"
-							onAction="#handleGenerateSelectedReport"
-							styleClass="primary-button" />
+					<!-- Report Controls -->
+					<HBox spacing="15" alignment="CENTER_LEFT">
+						<Label text="Report Type:" />
+						<ComboBox fx:id="comboReportType" prefWidth="200" />
+						<Label text="From:" />
+						<DatePicker fx:id="datePickerFrom" prefWidth="150" />
+						<Label text="To:" />
+						<DatePicker fx:id="datePickerTo" prefWidth="150" />
+						<Button text="Generate Report"
+							onAction="#handleGenerateSelectedReport" styleClass="primary-button" />
 					</HBox>
 
+					<Separator />
+
+					<!-- Report Tabs -->
 					<TabPane VBox.vgrow="ALWAYS">
 						<!-- Parking Time Report -->
 						<Tab text="Parking Time Report">
@@ -263,7 +338,7 @@
 				</VBox>
 			</Tab>
 
-			<!-- Tab 3: Active Parkings (Inherited) -->
+			<!-- Tab 3: Active Parkings -->
 			<Tab text="Active Parkings">
 				<VBox spacing="10">
 					<padding>
@@ -274,7 +349,7 @@
 						<Label text="Current Active Parking Sessions"
 							style="-fx-font-size: 16px; -fx-font-weight: bold;" />
 						<Region HBox.hgrow="ALWAYS" />
-						<Button text="Refresh Now" onAction="#loadActiveParkings" />
+						<Button text="Refresh Now" onAction="#loadActiveParkings" styleClass="primary-button" />
 						<Label text="(Auto-refresh every 30 seconds)"
 							style="-fx-font-style: italic;" />
 					</HBox>
@@ -287,126 +362,46 @@
 							<TableColumn fx:id="colSubscriberName"
 								text="Subscriber" prefWidth="150" />
 							<TableColumn fx:id="colSpot" text="Spot"
-								prefWidth="95" />
+								prefWidth="80" />
 							<TableColumn fx:id="colEntryTime" text="Entry Time"
-								prefWidth="135" />
+								prefWidth="150" />
 							<TableColumn fx:id="colExpectedExit"
-								text="Expected Exit" prefWidth="135" />
+								text="Expected Exit" prefWidth="150" />
 							<TableColumn fx:id="colType" text="Type"
-								prefWidth="110" />
+								prefWidth="100" />
 						</columns>
 					</TableView>
-
-
 				</VBox>
 			</Tab>
 
-			<!-- Tab 5: Subscribers -->
-			<Tab text="Subscribers info">
+			<!-- Tab 4: Subscribers -->
+			<Tab text="Subscribers">
 				<VBox spacing="10">
 					<padding>
 						<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
 					</padding>
 
 					<HBox spacing="10" alignment="CENTER_LEFT">
-						<Label text="All Subscribers"
+						<Label text="Registered Subscribers"
 							style="-fx-font-size: 16px; -fx-font-weight: bold;" />
 						<Region HBox.hgrow="ALWAYS" />
-						<Button text="Refresh" onAction="#loadSubscribers" />
+						<Button text="Refresh" onAction="#loadSubscribers" styleClass="primary-button" />
 					</HBox>
 
 					<TableView fx:id="tableSubscribers" VBox.vgrow="ALWAYS">
 						<columns>
 							<TableColumn fx:id="colSubName" text="Name"
-								prefWidth="140" />
+								prefWidth="150" />
 							<TableColumn fx:id="colSubPhone" text="Phone"
 								prefWidth="120" />
 							<TableColumn fx:id="colSubEmail" text="Email"
-								prefWidth="180" />
+								prefWidth="200" />
 							<TableColumn fx:id="colSubCar" text="Car Number"
-								prefWidth="110" />
-							<TableColumn fx:id="colSubUsername" text="Username"
-								prefWidth="120" />
+								prefWidth="100" />
+							<TableColumn fx:id="colSubUsername"
+								text="Username" prefWidth="120" />
 						</columns>
 					</TableView>
-				</VBox>
-			</Tab>
-
-			<!-- Tab 4: System Management -->
-			<Tab text="System Management">
-				<VBox spacing="20" style="-fx-background-color: #ECF0F1;">
-					<padding>
-						<Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-					</padding>
-
-					<Label text="System Management"
-						style="-fx-font-size: 20px; -fx-font-weight: bold;" />
-
-					<!-- Auto-Cancellation Settings -->
-					<TitledPane text="Auto-Cancellation Service"
-						expanded="true">
-						<VBox spacing="10">
-							<padding>
-								<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-							</padding>
-
-							<HBox spacing="10" alignment="CENTER_LEFT">
-								<Label text="Status:" minWidth="100" />
-								<Label fx:id="lblAutoCancelStatus" text="Active"
-									style="-fx-text-fill: #27AE60; -fx-font-weight: bold;" />
-							</HBox>
-
-							<Label
-								text="Automatically cancels reservations 15 minutes after scheduled time if customer doesn't arrive"
-								wrapText="true" style="-fx-text-fill: #7F8C8D;" />
-						</VBox>
-					</TitledPane>
-
-					<!-- Monthly Report Generation -->
-					<TitledPane text="Monthly Reports" expanded="false">
-						<VBox spacing="10">
-							<padding>
-								<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-							</padding>
-
-							<HBox spacing="10" alignment="CENTER_LEFT">
-								<Label text="Select Month:" minWidth="100" />
-								<ComboBox fx:id="comboMonth" prefWidth="150" />
-								<ComboBox fx:id="comboYear" prefWidth="100" />
-								<Button text="Generate Monthly Reports"
-									onAction="#handleGenerateMonthlyReports" />
-							</HBox>
-
-							<Label
-								text="Reports are automatically generated at the end of each month"
-								style="-fx-text-fill: #7F8C8D;" />
-						</VBox>
-					</TitledPane>
-
-					<!-- System Statistics -->
-					<TitledPane text="System Statistics" expanded="false">
-						<GridPane hgap="15" vgap="10">
-							<padding>
-								<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-							</padding>
-
-							<Label text="Total Registered Users:"
-								GridPane.columnIndex="0" GridPane.rowIndex="0" />
-							<Label fx:id="lblTotalUsers" text="--"
-								GridPane.columnIndex="1" GridPane.rowIndex="0" />
-
-							<Label text="Peak Usage Hours:" GridPane.columnIndex="0"
-								GridPane.rowIndex="1" />
-							<Label fx:id="lblPeakHours" text="--"
-								GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-							<Label text="Average Daily Usage:" GridPane.columnIndex="0"
-								GridPane.rowIndex="2" />
-							<Label fx:id="lblAvgDailyUsage" text="--"
-								GridPane.columnIndex="1" GridPane.rowIndex="2" />
-						</GridPane>
-					</TitledPane>
-
 				</VBox>
 			</Tab>
 
