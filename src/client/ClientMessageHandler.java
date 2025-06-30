@@ -289,6 +289,22 @@ public class ClientMessageHandler {
             showAlert("Activation Failed", response);
         }
     }
+    
+    // String message handlers (legacy)
+    
+    private static void handleStringLoginResponse(String data) {
+        if (!data.equals("None")) {
+            BParkClientApp.setUserType(data);
+            BParkClientApp.switchToMainScreen(data);
+        } else {
+            showAlert("Login Failed", "Invalid credentials");
+        }
+    }
+    
+    private static void handleStringAvailableSpots(String data) {
+        showAlert("Available Spots", "Current available spots: " + data);
+    }
+    
 
     private static void handleCancellationResponse(Message message) {
         String response = (String) message.getContent();

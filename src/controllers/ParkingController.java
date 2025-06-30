@@ -10,9 +10,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.Random;
-
-
 import entities.ParkingOrder;
 import entities.ParkingSubscriber;
 import server.DBController;
@@ -395,57 +392,67 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
      * Handles parking entry with reservation code - NOW SUPPORTS PREORDER->ACTIVE
      */
     public String enterParkingWithReservation(int reservationCode) {
-        // Check if reservation exists and is in preorder status
         String checkQry = """
-            SELECT pi.*, u.User_ID 
-            FROM parkinginfo pi 
-            JOIN users u ON pi.User_ID = u.User_ID 
+            SELECT pi.*, u.User_ID,
+                   TIMESTAMPDIFF(MINUTE, pi.Estimated_start_time, NOW()) as minutes_since_start
+            FROM parkinginfo pi
+            JOIN users u ON pi.User_ID = u.User_ID
             WHERE pi.ParkingInfo_ID = ? AND pi.statusEnum = 'preorder'
             """;
-        
+
         try (PreparedStatement stmt = conn.prepareStatement(checkQry)) {
             stmt.setInt(1, reservationCode);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    LocalDateTime estimatedStartTime = rs.getTimestamp("Estimated_start_time").toLocalDateTime();
-                    int userID = rs.getInt("User_ID");
+                    int minutesSinceStart = rs.getInt("minutes_since_start");
                     int parkingSpotID = rs.getInt("ParkingSpot_ID");
-                    
-                    // Check if reservation is for today
+
+                    LocalDateTime estimatedStartTime = rs.getTimestamp("Estimated_start_time").toLocalDateTime();
                     LocalDateTime now = LocalDateTime.now();
+
+                    // Check if it's today
                     if (!estimatedStartTime.toLocalDate().equals(now.toLocalDate())) {
                         if (estimatedStartTime.isBefore(now)) {
-                            // Cancel expired reservation
+                            // Expired reservation
                             cancelReservation(reservationCode);
-                            return "Reservation expired";
+                            return "Reservation expired (wrong date).";
                         } else {
-                            return "Reservation is for future date";
+                            return "Reservation is for a future date.";
                         }
                     }
 
+                    // Check if within 15 min after reserved time
+                    if (minutesSinceStart > 15) {
+                        cancelReservation(reservationCode);
+                        return "Reservation expired: arrived more than 15 min late.";
+                    }
 
+                    // Update reservation to active and set actual start time
+                    String updateQry = """
+                        UPDATE parkinginfo
+                        SET statusEnum = 'active', Actual_start_time = NOW()
+                        WHERE ParkingInfo_ID = ?
+                        """;
 
-//	public void connectToDB(String path, String pass) {
-//		try {
-//			Class.forName("com.mysql.cj.jdbc.Driver");
-//			System.out.println("Driver definition succeed");
-//		} catch (Exception ex) {
-//			System.out.println("Driver definition failed");
-//		}
-//
-//		try {
-//			conn = DriverManager.getConnection(path, "root", pass);
-//			System.out.println("SQL connection succeed");
-//			successFlag = 1;
-//		} catch (SQLException ex) {
-//			System.out.println("SQLException: " + ex.getMessage());
-//			System.out.println("SQLState: " + ex.getSQLState());
-//			System.out.println("VendorError: " + ex.getErrorCode());
-//			successFlag = 2;
-//		}
-//	}
+                    try (PreparedStatement updateStmt = conn.prepareStatement(updateQry)) {
+                        updateStmt.setInt(1, reservationCode);
+                        updateStmt.executeUpdate();
 
+                        // Mark spot as occupied
+                        updateParkingSpotStatus(parkingSpotID, true);
 
+                        System.out.println("Reservation " + reservationCode + " activated (preorder → active)");
+                        return "Entry successful! Reservation activated. Parking code: " + reservationCode 
+                                + ". Spot: " + parkingSpotID;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error handling reservation entry: " + e.getMessage());
+        }
+        return "Invalid reservation code or reservation not in preorder status.";
+    }
+    
 	/**
 	 * Gets the number of available parking spots
 	 */
@@ -685,64 +692,6 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 		return "Entry failed";
 	}
 
-	/**
-	 * Handles parking entry with reservation code - NOW SUPPORTS PREORDER->ACTIVE
-	 */
-	public String enterParkingWithReservation(int reservationCode) {
-		// Check if reservation exists and is in preorder status
-		String checkQry = """
-				SELECT pi.*, u.User_ID
-				FROM parkinginfo pi
-				JOIN users u ON pi.User_ID = u.User_ID
-				WHERE pi.ParkingInfo_ID = ? AND pi.statusEnum = 'preorder'
-				""";
-
-		try (PreparedStatement stmt = conn.prepareStatement(checkQry)) {
-			stmt.setInt(1, reservationCode);
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					LocalDateTime estimatedStartTime = rs.getTimestamp("Estimated_start_time").toLocalDateTime();
-					int userID = rs.getInt("User_ID");
-					int parkingSpotID = rs.getInt("ParkingSpot_ID");
-
-					// Check if reservation is for today
-					LocalDateTime now = LocalDateTime.now();
-					if (!estimatedStartTime.toLocalDate().equals(now.toLocalDate())) {
-						if (estimatedStartTime.isBefore(now)) {
-							// Cancel expired reservation
-							cancelReservation(reservationCode);
-							return "Reservation expired";
-						} else {
-							return "Reservation is for future date";
-						}
-					}
-
-					// Update reservation to active status and set actual start time
-					String updateQry = """
-							UPDATE parkinginfo
-							SET statusEnum = 'active', Actual_start_time = ?
-							WHERE ParkingInfo_ID = ?
-							""";
-
-					try (PreparedStatement updateStmt = conn.prepareStatement(updateQry)) {
-						updateStmt.setTimestamp(1, Timestamp.valueOf(now));
-						updateStmt.setInt(2, reservationCode);
-						updateStmt.executeUpdate();
-
-						// Mark parking spot as occupied
-						updateParkingSpotStatus(parkingSpotID, true);
-
-						System.out.println("Reservation " + reservationCode + " activated (preorder → active)");
-						return "Entry successful! Reservation activated. Parking code: " + reservationCode + ". Spot: "
-								+ parkingSpotID;
-					}
-				}
-			}
-		} catch (SQLException e) {
-			System.out.println("Error handling reservation entry: " + e.getMessage());
-		}
-		return "Invalid reservation code or reservation not in preorder status";
-	}
 
 	/**
 	 * ATTENDANT-ONLY: Register new subscriber (PDF requirement) Only attendants can
@@ -1321,71 +1270,6 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 		}
 	}
 
-	/**
-	 * Activate reservation when customer arrives (PREORDER → ACTIVE)
-	 */
-	public String activateReservation(String subscriberUserName, int reservationCode) {
-		// Check if reservation exists and is in preorder status
-		String checkQry = """
-				SELECT pi.*, u.UserName,
-				       TIMESTAMPDIFF(MINUTE, pi.Estimated_start_time, NOW()) as minutes_since_start
-				FROM parkinginfo pi
-				JOIN users u ON pi.User_ID = u.User_ID
-				WHERE pi.ParkingInfo_ID = ? AND pi.statusEnum = 'preorder'
-				""";
-
-		try (PreparedStatement stmt = conn.prepareStatement(checkQry)) {
-			stmt.setInt(1, reservationCode);
-
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					int minutesSinceStart = rs.getInt("minutes_since_start");
-					int spotId = rs.getInt("ParkingSpot_ID");
-
-					// Check if within 15-minute grace period
-					if (minutesSinceStart > 15) {
-						// Too late - auto-cancel
-						cancelReservation(subscriberUserName, reservationCode);
-						return "Reservation cancelled due to late arrival (over 15 minutes). Please make a new reservation.";
-					}
-
-					// Update reservation status to ACTIVE and set actual start time
-					LocalDateTime now = LocalDateTime.now();
-					String updateQry = """
-							UPDATE parkinginfo
-							SET statusEnum = 'active',
-							    Actual_start_time = ?,
-							    IsLate = ?
-							WHERE ParkingInfo_ID = ?
-							""";
-
-					try (PreparedStatement updateStmt = conn.prepareStatement(updateQry)) {
-						updateStmt.setTimestamp(1, Timestamp.valueOf(now));
-						updateStmt.setString(2, minutesSinceStart > 0 ? "yes" : "no");
-						updateStmt.setInt(3, reservationCode);
-						updateStmt.executeUpdate();
-
-						// Mark parking spot as occupied
-						updateParkingSpotStatus(spotId, true);
-
-						String lateMessage = minutesSinceStart > 0 ? " (Note: " + minutesSinceStart + " minutes late)"
-								: "";
-
-						System.out.println(
-								"Reservation " + reservationCode + " activated (preorder → active)" + lateMessage);
-
-						return "Reservation activated! Parking code: " + reservationCode + ". Spot: " + spotId
-								+ lateMessage;
-					}
-				}
-			}
-		} catch (SQLException e) {
-			System.out.println("Error activating reservation: " + e.getMessage());
-			return "Failed to activate reservation";
-		}
-
-		return "Reservation not found or already activated";
-	}
 
 	/**
 	 * Cancel reservation
@@ -1814,46 +1698,6 @@ public String updateSubscriberInfo(String updateData) {
             System.out.println("Error retrieving car: " + e.getMessage());
             e.printStackTrace();
             return "Error retrieving car.";
-        }
-    }
-    
-    public String handlePreorderEntry(int userID) {
-        String qry = """
-            SELECT ParkingInfo_ID, ParkingSpot_ID
-            FROM parkinginfo
-            WHERE User_ID = ?
-              AND statusEnum = 'reserved'
-              AND DATE(Estimated_start_time) = CURDATE()
-              AND NOW() BETWEEN Estimated_start_time AND Estimated_start_time + INTERVAL 15 MINUTE
-            ORDER BY Estimated_start_time ASC
-            LIMIT 1
-        """;
-
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setInt(1, userID);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    int parkingInfoID = rs.getInt("ParkingInfo_ID");
-                    int spotID = rs.getInt("ParkingSpot_ID");
-
-                    // Activate reservation
-                    try (PreparedStatement upd = conn.prepareStatement(
-                            "UPDATE parkinginfo SET statusEnum='active', Actual_start_time=NOW() WHERE ParkingInfo_ID=?")) {
-                        upd.setInt(1, parkingInfoID);
-                        upd.executeUpdate();
-                    }
-
-                    // Mark the spot as occupied
-                    updateParkingSpotStatus(spotID, true);
-
-                    return "Your pre-booked parking spot is now active. Spot: " + spotID;
-                } else {
-                    return "No valid reservation for today within the allowed time window.";
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error checking reservation: " + e.getMessage());
-            return "Error processing reservation.";
         }
     }
 
