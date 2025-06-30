@@ -1,8 +1,15 @@
 package server;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -12,6 +19,9 @@ import controllers.ParkingController;
 import controllers.ReportController;
 import entities.Message;
 import entities.Message.MessageType;
+import entities.ParkingOrder;
+import entities.ParkingReport;
+import entities.ParkingSubscriber;
 import ocsf.server.AbstractServer;
 import ocsf.server.ConnectionToClient;
 import serverGUI.ServerPortFrame;
@@ -104,6 +114,162 @@ public class ParkingServer extends AbstractServer {
                     handleActivateReservationKiosk(message, client);
                     break;
 
+                case SUBSCRIBER_LOGIN:
+    				String[] loginParts = ((String) message.getContent()).split(",");
+    				if (loginParts.length < 2) {
+    					ret = new Message(MessageType.SUBSCRIBER_LOGIN_RESPONSE, "ERROR: Missing username or user code");
+    					client.sendToClient(serialize(ret));
+    					break;
+    				}
+
+    				String username = loginParts[0].trim();
+    				String userCode = loginParts[1].trim();
+
+    				ParkingSubscriber subscriber = parkingController.getUserInfo(username);
+
+    				if (subscriber != null && String.valueOf(subscriber.getSubscriberID()).equals(userCode)) {
+    					ret = new Message(MessageType.SUBSCRIBER_LOGIN_RESPONSE, subscriber);
+    				} else {
+    					ret = new Message(MessageType.SUBSCRIBER_LOGIN_RESPONSE, null);
+    				}
+
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case CHECK_PARKING_AVAILABILITY:
+    				int availableSpots = parkingController.getAvailableParkingSpots();
+    				ret = new Message(MessageType.PARKING_AVAILABILITY_RESPONSE, availableSpots);
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case RESERVE_PARKING:
+    				String[] reservationData = ((String) message.getContent()).split(",");
+    				String reservationUserName = reservationData[0]; // ← RENAMED
+    				String reservationDate = reservationData[1];
+    				String reservationResult = parkingController.makeReservation(reservationUserName, reservationDate);
+    				ret = new Message(MessageType.RESERVATION_RESPONSE, reservationResult);
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case REGISTER_SUBSCRIBER:
+    				// Expected format: "attendantUserName,name,phone,email,carNumber,userName"
+    				String registrationData = (String) message.getContent();
+    				String[] regParts = registrationData.split(",");
+
+    				if (regParts.length >= 6) {
+    					String attendantUserName = regParts[0].trim();
+    					String name = regParts[1].trim();
+    					String phone = regParts[2].trim();
+    					String email = regParts[3].trim();
+    					String carNumber = regParts[4].trim();
+    					String subscriberUserName = regParts[5].trim(); // ← RENAMED
+
+    					String registrationResult = parkingController.registerNewSubscriber(attendantUserName, name, phone,
+    							email, carNumber, subscriberUserName);
+    					ret = new Message(MessageType.REGISTRATION_RESPONSE, registrationResult);
+    				} else {
+    					ret = new Message(MessageType.REGISTRATION_RESPONSE, "ERROR: Invalid registration data format");
+    				}
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case REQUEST_LOST_CODE:
+    				String lostCodeUserName = (String) message.getContent(); // ← RENAMED
+    				String lostCodeResult = parkingController.sendLostParkingCode(lostCodeUserName);
+    				ret = new Message(MessageType.LOST_CODE_RESPONSE, lostCodeResult);
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case GET_PARKING_HISTORY:
+    				String historyUserName = (String) message.getContent(); // ← RENAMED
+    				ArrayList<ParkingOrder> history = parkingController.getParkingHistory(historyUserName);
+    				ret = new Message(MessageType.PARKING_HISTORY_RESPONSE, history);
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case MANAGER_GET_REPORTS:
+    				String reportType = (String) message.getContent();
+    				ArrayList<ParkingReport> reports = reportController.getParkingReports(reportType);
+    				ret = new Message(MessageType.MANAGER_SEND_REPORTS, reports);
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case GET_ACTIVE_PARKINGS:
+    				ArrayList<ParkingOrder> activeParkings = parkingController.getActiveParkings();
+    				ret = new Message(MessageType.ACTIVE_PARKINGS_RESPONSE, activeParkings);
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case UPDATE_SUBSCRIBER_INFO:
+    				String updateResult = parkingController.updateSubscriberInfo((String) message.getContent());
+    				ret = new Message(MessageType.UPDATE_SUBSCRIBER_RESPONSE, updateResult);
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case GENERATE_MONTHLY_REPORTS:
+    				String monthYear = (String) message.getContent();
+    				ArrayList<ParkingReport> monthlyReports = reportController.generateMonthlyReports(monthYear);
+    				ret = new Message(MessageType.MONTHLY_REPORTS_RESPONSE, monthlyReports);
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case CANCEL_RESERVATION:
+    				// Expected format: "userName,reservationCode"
+    				String[] cancelData = ((String) message.getContent()).split(",", 2);
+    				if (cancelData.length != 2) {
+    					ret = new Message(MessageType.CANCELLATION_RESPONSE, "ERROR: Invalid cancellation data format");
+    				} else {
+    					try {
+    						String cancelUserName = cancelData[0].trim();
+    						int reservationCode = Integer.parseInt(cancelData[1].trim());
+    						String cancelResult = parkingController.cancelReservation(cancelUserName, reservationCode);
+    						ret = new Message(MessageType.CANCELLATION_RESPONSE, cancelResult);
+    					} catch (NumberFormatException e) {
+    						ret = new Message(MessageType.CANCELLATION_RESPONSE, "ERROR: Invalid reservation code format");
+    					}
+    				}
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case GET_SUBSCRIBER_BY_NAME:
+    				String subscriberName = (String) message.getContent();
+    				subscriber = parkingController.getSubscriberByName(subscriberName);
+    				ret = new Message(MessageType.SHOW_SUBSCRIBER_DETAILS, subscriber);
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case GET_ALL_SUBSCRIBERS:
+    				List<ParkingSubscriber> allSubs = parkingController.getAllSubscribers();
+    				Message response = new Message(MessageType.SHOW_ALL_SUBSCRIBERS, (Serializable) allSubs);
+    				client.sendToClient(serialize(response)); // ← נכון
+    				break;
+
+    			case REQUEST_EXTENSION:
+    				try {
+    					String[] parts = ((String) message.getContent()).split(",");
+    					if (parts.length != 2) {
+    						ret = new Message(MessageType.EXTENSION_RESPONSE, "Invalid extension format.");
+    					} else {
+    						String parkingCode = parts[0].trim();
+    						int additionalHours = Integer.parseInt(parts[1].trim());
+    						String result = parkingController.extendParkingTime(parkingCode, additionalHours);
+
+    						ret = new Message(MessageType.EXTENSION_RESPONSE, result);
+    					}
+    				} catch (NumberFormatException e) {
+    					ret = new Message(MessageType.EXTENSION_RESPONSE, "Invalid number format for extension hours.");
+    				}
+    				client.sendToClient(serialize(ret));
+    				break;
+
+    			case REQUEST_SUBSCRIBER_DATA: {
+    				String userName = (String) message.getContent();
+    				ParkingSubscriber userInfo = parkingController.getUserInfo(userName); // use your DB instance
+    				response = new Message(MessageType.SUBSCRIBER_DATA_RESPONSE, userInfo);
+    				client.sendToClient(response);
+    				break;
+    			}
+    			
                 default:
                     System.out.println("Unknown message type: " + message.getType());
                     break;
