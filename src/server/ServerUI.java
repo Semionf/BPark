@@ -4,44 +4,70 @@ import javafx.application.Application;
 import javafx.stage.Stage;
 import serverGUI.ServerPortFrame;
 
-
 /**
- * ServerUI is the main entry point for the ParkB server application.
- * It launches the JavaFX GUI for server configuration and monitoring.
+ * ||in SERVER||
+ * 
+ * ServerUI is the main entry point for the BPARK server application. It extends
+ * the JavaFX {@link Application} class to launch the server's graphical user
+ * interface (GUI) for configuring and monitoring server activity.
+ * 
+ * The server GUI allows the user to specify the port and start the server. This
+ * class also provides a static method for running the server headlessly with a
+ * given port.
+ * 
+ * @author Yair
+ * @version 1.0
  */
 public class ServerUI extends Application {
-    final public static int DEFAULT_PORT = 5555;
 
-    public static void main(String args[]) throws Exception {
-        launch(args);
-    }
+	/** The default port to be used if none is specified */
+	public static final int DEFAULT_PORT = 5555;
 
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-        ServerPortFrame aFrame = new ServerPortFrame();
-        aFrame.start(primaryStage);
-    }
+	/**
+	 * The standard Java entry point. Launches the JavaFX application.
+	 *
+	 * @param args command-line arguments
+	 * @throws Exception if the application launch fails
+	 */
+	public static void main(String args[]) throws Exception {
+		launch(args);
+	}
 
-    /**
-     * Starts the parking server with the specified port
-     * @param p The port number as a string
-     */
-    public static void runServer(String p) {
-        int port = 0;
+	/**
+	 * Starts the JavaFX primary stage and displays the server configuration GUI.
+	 *
+	 * @param primaryStage the primary stage for this application
+	 * @throws Exception if GUI initialization fails
+	 */
+	@Override
+	public void start(Stage primaryStage) throws Exception {
+		ServerPortFrame aFrame = new ServerPortFrame();
+		aFrame.start(primaryStage);
+	}
 
-        try {
-            port = Integer.parseInt(p);
-        } catch (Throwable t) {
-            System.out.println("ERROR - Could not parse port number!");
-        }
+	/**
+	 * Starts the parking server with the specified port number. If parsing the port
+	 * fails, the default port is used and an error is printed. In case of a failure
+	 * to listen for clients, an error is logged and GUI status is updated.
+	 *
+	 * @param p the port number as a string
+	 */
+	public static void runServer(String p) {
+		int port = 0;
 
-        ParkingServer sv = new ParkingServer(port);
+		try {
+			port = Integer.parseInt(p);
+		} catch (Throwable t) {
+			System.out.println("ERROR - Could not parse port number!");
+		}
 
-        try {
-            sv.listen();
-        } catch (Exception ex) {
-            ServerPortFrame.str = "error";
-            System.out.println("ERROR - Could not listen for clients!");
-        }
-    }
+		ParkingServer sv = new ParkingServer(port);
+
+		try {
+			sv.listen();
+		} catch (Exception ex) {
+			ServerPortFrame.str = "error";
+			System.out.println("ERROR - Could not listen for clients!");
+		}
+	}
 }

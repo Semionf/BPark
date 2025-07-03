@@ -22,116 +22,152 @@ import services.EmailService;
 
 public class ParkingController {
 
-	  private int subscriberID;
-    private String firstName;
-    private String phoneNumber;
-    private String email;
-    private String carNumber;
-    private String subscriberCode;
-    private String userType;
-    protected Connection conn;
-    public int successFlag;
-    private static final int TOTAL_PARKING_SPOTS = 10;
-    private static final double RESERVATION_THRESHOLD = 0.4;
-    
-    
-    // Getters
-    public int getSubscriberID() { return subscriberID; }
-    public String getFirstName() { return firstName; }
-    public String getPhoneNumber() { return phoneNumber; }
-    public String getEmail() { return email; }
-    public String getCarNumber() { return carNumber; }
-    public String getSubscriberCode() { return subscriberCode; }
-    public String getUserType() { return userType; }
+	private int subscriberID;
+	private String firstName;
+	private String phoneNumber;
+	private String email;
+	private String carNumber;
+	private String subscriberCode;
+	private String userType;
+	protected Connection conn;
+	public int successFlag;
+	private static final int TOTAL_PARKING_SPOTS = 10;
+	private static final double RESERVATION_THRESHOLD = 0.4;
 
-    // Setters
-    public void setSubscriberID(int subscriberID) { this.subscriberID = subscriberID; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
-    public void setEmail(String email) { this.email = email; }
-    public void setCarNumber(String carNumber) { this.carNumber = carNumber; }
-    public void setSubscriberCode(String subscriberCode) { this.subscriberCode = subscriberCode; }
-    public void setUserType(String userType) { this.userType = userType; }
+	// Getters
+	public int getSubscriberID() {
+		return subscriberID;
+	}
 
-    
-    /**
-     * Role-based access control for all parking operations
-     */
-    public enum UserRole {
-        SUBSCRIBER("sub"),
-        ATTENDANT("emp"), 
-        MANAGER("mng");
-        
-        private final String dbValue;
-        
-        UserRole(String dbValue) {
-            this.dbValue = dbValue;
-        }
-        
-        public String getDbValue() {
-            return dbValue;
-        }
-        
-        public static UserRole fromDbValue(String dbValue) {
-            for (UserRole role : values()) {
-                if (role.dbValue.equals(dbValue)) {
-                    return role;
-                }
-            }
-            return null;
-        }
-    }
+	public String getFirstName() {
+		return firstName;
+	}
 
-    /**
-     * Get user role from database
-     */
-    private UserRole getUserRole(String userName) {
-        String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ?";
-        
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setString(1, userName);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String userType = rs.getString("UserTypeEnum");
-                    return UserRole.fromDbValue(userType);
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error getting user role: " + e.getMessage());
-        }
-        return null;
-    }
+	public String getPhoneNumber() {
+		return phoneNumber;
+	}
 
-    /**
-     * Check if user has required role for operation
-     */
-    private boolean hasRole(String userName, UserRole requiredRole) {
-        UserRole userRole = getUserRole(userName);
-        return userRole == requiredRole;
-    }
+	public String getEmail() {
+		return email;
+	}
 
-    /**
-     * Check if user has any of the required roles
-     */
-    private boolean hasAnyRole(String userName, UserRole... requiredRoles) {
-        UserRole userRole = getUserRole(userName);
-        if (userRole == null) return false;
-        
-        for (UserRole role : requiredRoles) {
-            if (userRole == role) return true;
-        }
-        return false;
-    }
-    
-    // Auto-cancellation service
-    private SimpleAutoCancellationService autoCancellationService;
+	public String getCarNumber() {
+		return carNumber;
+	}
 
+	public String getSubscriberCode() {
+		return subscriberCode;
+	}
 
+	public String getUserType() {
+		return userType;
+	}
 
-    public Connection getConnection() {
-        return conn;
-    }
+	// Setters
+	public void setSubscriberID(int subscriberID) {
+		this.subscriberID = subscriberID;
+	}
 
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public void setCarNumber(String carNumber) {
+		this.carNumber = carNumber;
+	}
+
+	public void setSubscriberCode(String subscriberCode) {
+		this.subscriberCode = subscriberCode;
+	}
+
+	public void setUserType(String userType) {
+		this.userType = userType;
+	}
+
+	/**
+	 * Role-based access control for all parking operations
+	 */
+	public enum UserRole {
+		SUBSCRIBER("sub"), ATTENDANT("emp"), MANAGER("mng");
+
+		private final String dbValue;
+
+		UserRole(String dbValue) {
+			this.dbValue = dbValue;
+		}
+
+		public String getDbValue() {
+			return dbValue;
+		}
+
+		public static UserRole fromDbValue(String dbValue) {
+			for (UserRole role : values()) {
+				if (role.dbValue.equals(dbValue)) {
+					return role;
+				}
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Get user role from database
+	 */
+	private UserRole getUserRole(String userName) {
+		String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ?";
+		Connection conn = DBController.getInstance().getConnection();
+
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			stmt.setString(1, userName);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					String userType = rs.getString("UserTypeEnum");
+					return UserRole.fromDbValue(userType);
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error getting user role: " + e.getMessage());
+		}
+		return null;
+	}
+
+	/**
+	 * Check if user has required role for operation
+	 */
+	private boolean hasRole(String userName, UserRole requiredRole) {
+		UserRole userRole = getUserRole(userName);
+		return userRole == requiredRole;
+	}
+
+	/**
+	 * Check if user has any of the required roles
+	 */
+	private boolean hasAnyRole(String userName, UserRole... requiredRoles) {
+		UserRole userRole = getUserRole(userName);
+		if (userRole == null)
+			return false;
+
+		for (UserRole role : requiredRoles) {
+			if (userRole == role)
+				return true;
+		}
+		return false;
+	}
+
+	// Auto-cancellation service
+	private SimpleAutoCancellationService autoCancellationService;
+
+	public Connection getConnection() {
+		return conn;
+	}
 
 //    public void connectToDB(String path, String pass) {
 //        try {
@@ -321,8 +357,8 @@ public class ParkingController {
 		} catch (Exception e) {
 			System.out.println("Error making reservation: " + e.getMessage());
 			return "Reservation failed: " + e.getMessage();
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return "Reservation failed";
 	}
@@ -348,8 +384,8 @@ public class ParkingController {
 		} catch (SQLException e) {
 			System.out.println("Error checking active parking: " + e.getMessage());
 			return "Could not verify active parking.";
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		// Check if parking is full
@@ -390,8 +426,8 @@ public class ParkingController {
 		} catch (SQLException e) {
 			System.out.println("Error handling entry: " + e.getMessage());
 			return "Entry failed due to database error.";
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 	}
 
@@ -456,8 +492,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error handling reservation entry: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return "Invalid reservation code or reservation not in preorder status.";
 	}
@@ -476,8 +512,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting available spots: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return 0;
 	}
@@ -512,8 +548,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error sending lost code: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return "No active parking session found for this user.";
@@ -560,8 +596,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error finding available spot for time slot: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		System.out.println("No available spots for time slot " + startTime + " to " + endTime);
@@ -617,8 +653,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting available spots for time slot: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return 0;
 	}
@@ -702,8 +738,8 @@ public class ParkingController {
 		} catch (SQLException e) {
 			System.out.println("Error handling entry: " + e.getMessage());
 			return "Entry failed";
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return "Entry failed";
 	}
@@ -763,8 +799,8 @@ public class ParkingController {
 		} catch (SQLException e) {
 			System.out.println("Error checking username: " + e.getMessage());
 			return "Error checking username availability";
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		// Insert new subscriber
@@ -798,8 +834,8 @@ public class ParkingController {
 		} catch (SQLException e) {
 			System.out.println("Registration failed: " + e.getMessage());
 			return "Registration failed: " + e.getMessage();
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return "Registration failed: Unknown error";
@@ -889,8 +925,8 @@ public class ParkingController {
 			return "Invalid parking code format";
 		} catch (SQLException e) {
 			System.out.println("Error handling exit: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return "Invalid parking code or already exited";
 	}
@@ -983,8 +1019,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error sending lost code: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return "No active parking session found";
 	}
@@ -1037,8 +1073,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting parking history: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return history;
 	}
@@ -1084,8 +1120,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting active parkings: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return activeParkings;
 	}
@@ -1114,8 +1150,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting user info for cancellation: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		String qry = """
@@ -1141,8 +1177,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error cancelling reservation: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return "Reservation not found or already cancelled/finished";
 	}
@@ -1182,8 +1218,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error initializing parking spots: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 	}
 
@@ -1201,8 +1237,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting user ID: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return -1;
 	}
@@ -1218,8 +1254,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting available spot ID: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return -1;
 	}
@@ -1236,8 +1272,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error checking spot availability: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return false;
 	}
@@ -1251,8 +1287,8 @@ public class ParkingController {
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			System.out.println("Error updating parking spot status: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 	}
 
@@ -1276,8 +1312,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error sending late notification: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 	}
 
@@ -1293,8 +1329,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error checking username availability: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return false;
@@ -1313,8 +1349,8 @@ public class ParkingController {
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			System.out.println("Error freeing spot for reservation: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 	}
 
@@ -1354,8 +1390,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting reservation info for cancellation: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		// Update reservation status to cancelled
@@ -1386,8 +1422,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error cancelling reservation: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return "Reservation not found or already cancelled/finished";
@@ -1408,8 +1444,8 @@ public class ParkingController {
 			rs.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return subscriber;
 	}
@@ -1431,8 +1467,8 @@ public class ParkingController {
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return list;
@@ -1528,8 +1564,8 @@ public class ParkingController {
 			return "Invalid parking code format.";
 		} catch (SQLException e) {
 			System.out.println("Error extending parking time: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return "Invalid parking code or parking session not active.";
@@ -1586,8 +1622,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error updating subscriber info: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return "Failed to update subscriber information";
@@ -1611,18 +1647,12 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error checking user ID: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return false;
 	}
 
-
- 
- 
-
-   
-   
 	/**
 	 * Checks whether a user with the given username exists in the database.
 	 *
@@ -1641,8 +1671,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error checking username: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return false;
 	}
@@ -1661,12 +1691,11 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting name by username and userID: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return null;
 	}
-
 
 	public String getNameByUserID(int userID) {
 		String qry = "SELECT Name FROM users WHERE User_ID = ?";
@@ -1680,8 +1709,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting name by user ID: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return null;
 	}
@@ -1699,8 +1728,8 @@ public class ParkingController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error checking parking availability: " + e.getMessage());
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 		return true; // assume full on DB error
 	}
@@ -1762,8 +1791,8 @@ public class ParkingController {
 			System.out.println("Error retrieving car: " + e.getMessage());
 			e.printStackTrace();
 			return "Error retrieving car.";
-		}finally {
-		    DBController.getInstance().releaseConnection(conn);
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 	}
 

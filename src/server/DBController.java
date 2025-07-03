@@ -6,26 +6,41 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /**
+ * ||in SERVER||
+ * 
  * DBController manages a pool of database connections using the Singleton
- * pattern. Supports thread-safe take and retrive.
+ * pattern. It provides thread-safe methods for acquiring and releasing
+ * connections.
+ * 
+ * The class initializes a fixed-size connection pool upon first invocation, and
+ * allows controlled access to connections for database operations.
+ * 
+ * @author Yair
+ * @version 1.0
  */
 public class DBController {
 
-
 	/** Singleton instance of DBController */
 	private static DBController instance = null;
-	/** Queue for connection pool */
+
+	/** Queue representing the connection pool */
 	private final Queue<Connection> connectionPool = new LinkedList<>();
-	/** Size of the connection pool */
+
+	/** Fixed size of the connection pool */
 	private final int POOL_SIZE = 6;
-	/** if the DB connection initialization succeeded (1 = success, 0 = failure) */
+
+	/**
+	 * Flag indicating whether the DB initialization succeeded (1 = success, 0 =
+	 * failure)
+	 */
 	private final int successFlag;
 
 	/**
-	 * Private constructor. Establishes a connection to the database.
+	 * Private constructor. Establishes a pool of connections to the specified
+	 * database.
 	 *
-	 * @param dbName   Name of the database
-	 * @param password Password for the "root" user
+	 * @param dbName   the name of the database to connect to
+	 * @param password the root user's password for the database
 	 */
 	private DBController(String dbName, String password) {
 		int flag = 0;
@@ -52,10 +67,10 @@ public class DBController {
 
 	/**
 	 * Initializes the singleton instance of DBController. This method must be
-	 * called once before using getInstance().
+	 * called once before calling {@link #getInstance()}.
 	 *
 	 * @param dbName   the name of the database
-	 * @param password password for the database
+	 * @param password the root user's password for the database
 	 */
 	public static synchronized void initializeConnection(String dbName, String password) {
 		if (instance == null) {
@@ -66,8 +81,10 @@ public class DBController {
 	/**
 	 * Returns the singleton instance of DBController.
 	 *
-	 * @return the DBController instance
-	 * @throws IllegalStateException if initializeConnection() was not called first
+	 * @return the singleton DBController instance
+	 * @throws IllegalStateException if
+	 *                               {@link #initializeConnection(String, String)}
+	 *                               was not called first
 	 */
 	public static DBController getInstance() {
 		if (instance == null) {
@@ -77,28 +94,28 @@ public class DBController {
 	}
 
 	/**
-	 * Retrieves an available connection from the pool. Waits up to 30 seconds if no
-	 * connections are currently available.
+	 * Retrieves a database connection from the pool. Waits up to 5 seconds if no
+	 * connection is currently available.
 	 *
-	 * @return a Connection from the pool
-	 * @throws RuntimeException if no connection becomes available within 30 seconds
+	 * @return a {@link Connection} object from the pool
+	 * @throws RuntimeException if no connection becomes available within 5 seconds
 	 */
 	public synchronized Connection getConnection() {
 		long startTime = System.currentTimeMillis();
 		int waitCounter = 0;
 		while (connectionPool.isEmpty()) {
-		    if (System.currentTimeMillis() - startTime > 5000) {
-		        throw new RuntimeException("Timeout: No available DB connections.");
-		    }
-		    if (waitCounter % 10 == 0) {
-		        System.out.println("Waiting for available DB connection...");
-		    }
-		    try {
-		        wait(100);
-		    } catch (InterruptedException e) {
-		        Thread.currentThread().interrupt();
-		    }
-		    waitCounter++;
+			if (System.currentTimeMillis() - startTime > 5000) {
+				throw new RuntimeException("Timeout: No available DB connections.");
+			}
+			if (waitCounter % 10 == 0) {
+				System.out.println("Waiting for available DB connection...");
+			}
+			try {
+				wait(100);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			waitCounter++;
 		}
 
 		Connection conn = connectionPool.remove();
@@ -107,29 +124,24 @@ public class DBController {
 	}
 
 	/**
-	 * Returns a used connection back to the pool and notifies waiting threads. so
-	 * they can try again to use
-	 * 
-	 * @param conn the Connection to release
+	 * Returns a used connection back to the pool and notifies waiting threads.
+	 *
+	 * @param conn the {@link Connection} to return to the pool
 	 */
 	public synchronized void releaseConnection(Connection conn) {
 		if (conn != null) {
 			connectionPool.add(conn);
 			System.out.println("Connection returned. Now available in pool: " + connectionPool.size());
-
-			notifyAll(); // wake all the "waiting threads".
+			notifyAll(); // Wake up waiting threads
 		}
 	}
 
 	/**
-	 * Returns a flag indicating success (1) or failure (0) of initial database
-	 * connection setup.
+	 * Returns a flag indicating the result of the database initialization.
 	 *
-	 * @return 1 if successful, otherwise 0
+	 * @return 1 if successful, 0 if failed
 	 */
 	public int getSuccessFlag() {
 		return successFlag;
 	}
-
 }
-

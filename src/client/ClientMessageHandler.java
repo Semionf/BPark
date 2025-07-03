@@ -239,7 +239,6 @@ public class ClientMessageHandler {
     @SuppressWarnings("unchecked")
     private static void handleParkingHistory(Message message) {
         ArrayList<ParkingOrder> history = (ArrayList<ParkingOrder>) message.getContent();
-        System.out.println("Received " + history.size() + " parking records");
     }
 
     @SuppressWarnings("unchecked")
@@ -257,7 +256,7 @@ public class ClientMessageHandler {
     @SuppressWarnings("unchecked")
     private static void handleActiveParkings(Message message) {
         ArrayList<ParkingOrder> activeParkings = (ArrayList<ParkingOrder>) message.getContent();
-        System.out.println("Received " + activeParkings.size() + " active parking sessions");
+       
 
         AttendantController controller = BParkClientApp.getAttendantController();
         if (controller != null) {

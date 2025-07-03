@@ -18,20 +18,22 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceDialog;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
 import javafx.util.Duration;
 
+/**
+ * ||in CLIENT||
+ * 
+ * Controller class for the parking lot attendant UI. Handles subscriber
+ * registration, active parking monitoring, and UI updates.
+ */
 public class AttendantController implements Initializable {
 
-	
-	// Registration form fields
+	// ====== Registration Fields ======
+
 	@FXML
 	private TextField txtName;
 	@FXML
@@ -44,12 +46,11 @@ public class AttendantController implements Initializable {
 	private TextField txtUsername;
 	@FXML
 	private Label lblRegistrationStatus;
-
-
 	@FXML
 	private Button btnLogout;
 
-	// Active parkings table
+	// ====== Active Parking Table ======
+
 	@FXML
 	private TableView<ParkingOrder> tableActiveParkings;
 	@FXML
@@ -64,6 +65,10 @@ public class AttendantController implements Initializable {
 	private TableColumn<ParkingOrder, String> colExpectedExit;
 	@FXML
 	private TableColumn<ParkingOrder, String> colType;
+	@FXML
+	private TableColumn<ParkingOrder, String> colCode;
+
+	// ====== Subscribers Table ======
 
 	@FXML
 	private TableView<ParkingSubscriber> tableSubscribers;
@@ -78,28 +83,24 @@ public class AttendantController implements Initializable {
 	@FXML
 	private TableColumn<ParkingSubscriber, String> colSubUsername;
 
-	// System Status
-	@FXML
-	private ProgressBar progressOccupancy;
-	@FXML
-	private Label lblOccupancyDetails;
+	// ====== System Status ======
+
 	@FXML
 	private Label lblParkingStatus;
 	@FXML
 	private Label lblAttendantInfo;
 
-	// Quick Assist Controls
-	@FXML
-	private TextField txtAssistCode;
-	@FXML
-	private ComboBox<String> comboAssistAction;
-
 	private ObservableList<ParkingOrder> activeParkings = FXCollections.observableArrayList();
-	
+
+	/**
+	 * Sets the username label for the current attendant.
+	 *
+	 * @param userName The username of the logged-in attendant.
+	 */
 	public void setUserName(String userName) {
-	    if (lblAttendantInfo != null) {
-	        lblAttendantInfo.setText("Attendant: " + userName);
-	    }
+		if (lblAttendantInfo != null) {
+			lblAttendantInfo.setText("Attendant: " + userName);
+		}
 	}
 
 	@Override
@@ -110,14 +111,10 @@ public class AttendantController implements Initializable {
 		loadSubscribers();
 	}
 
+	/**
+	 * Initializes the UI elements and auto-refresh behavior.
+	 */
 	private void setupUI() {
-
-		if (comboAssistAction != null) {
-			lblAttendantInfo.setText("Attendant: " + BParkClientApp.getCurrentUser());
-			comboAssistAction.getItems().addAll("Help with Entry", "Help with Exit", "Lost Code Recovery",
-					"Extend Parking Time");
-		}
-
 		if (tableActiveParkings != null) {
 			tableActiveParkings.setItems(activeParkings);
 			setupTableColumns();
@@ -131,11 +128,14 @@ public class AttendantController implements Initializable {
 			colSubUsername
 					.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSubscriberCode()));
 		}
+
 		startAutoRefresh();
 	}
 
+	/**
+	 * Configures the table columns to map data from ParkingOrder.
+	 */
 	private void setupTableColumns() {
-		// Configure table columns to display parking order data
 		colParkingCode.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getParkingCode()));
 		colSubscriberName
 				.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getSubscriberName()));
@@ -145,54 +145,27 @@ public class AttendantController implements Initializable {
 		colExpectedExit.setCellValueFactory(
 				cellData -> new SimpleStringProperty(cellData.getValue().getFormattedExpectedExitTime()));
 		colType.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOrderType()));
+		colCode.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getParkingCode()));
 	}
 
+	/**
+	 * Starts a 30-second auto-refresh loop for the active parking list.
+	 */
 	private void startAutoRefresh() {
 		Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(30), event -> loadActiveParkings()));
 		timeline.setCycleCount(Timeline.INDEFINITE);
 		timeline.play();
 	}
 
-	// ===== Action Handlers =====
-
-	@FXML
-	private void handleRegisterSubscriber() {
-		// Validate all fields
-		if (!validateRegistrationForm()) {
-			return;
-		}
-
-		String registrationData = String.format("%s,%s,%s,%s,%s,%s", BParkClientApp.getCurrentUser(), // Attendant
-																										// username
-				txtName.getText().trim(), txtPhone.getText().trim(), txtEmail.getText().trim(),
-				txtCarNumber.getText().trim(), txtUsername.getText().trim());
-
-		Message msg = new Message(MessageType.REGISTER_SUBSCRIBER, registrationData);
-		BParkClientApp.sendMessage(msg);
-	}
-
-	@FXML
-	private void handleGenerateUsername() {
-		String baseName = txtName.getText().trim();
-		if (baseName.isEmpty()) {
-			showAlert("Error", "Please enter subscriber name first");
-			return;
-		}
-
-		// Generate username suggestion based on name
-		String suggestion = baseName.toLowerCase().replaceAll("[^a-z0-9]", "");
-		txtUsername.setText(suggestion);
-	}
-
-	@FXML
-	private void loadActiveParkings() {
-		Message msg = new Message(MessageType.GET_ACTIVE_PARKINGS, null);
-		BParkClientApp.sendMessage(msg);
-	}
-
+	/**
+	 * Updates the active parking list and label.
+	 *
+	 * @param parkings Observable list of ParkingOrder to display.
+	 */
 	public void updateActiveParkings(ObservableList<ParkingOrder> parkings) {
 		this.activeParkings.clear();
 		this.activeParkings.addAll(parkings);
+
 		Platform.runLater(() -> {
 			if (lblParkingStatus != null) {
 				lblParkingStatus.setText(String.format("Active Parking Spots: %d", parkings.size()));
@@ -200,12 +173,11 @@ public class AttendantController implements Initializable {
 		});
 	}
 
-	@FXML
-	private void loadSubscribers() {
-		Message msg = new Message(MessageType.GET_ALL_SUBSCRIBERS, null);
-		BParkClientApp.sendMessage(msg);
-	}
-
+	/**
+	 * Updates the subscribers table with the given list.
+	 *
+	 * @param subscribers List of ParkingSubscriber.
+	 */
 	public void updateSubscriberTable(java.util.List<ParkingSubscriber> subscribers) {
 		Platform.runLater(() -> {
 			ObservableList<ParkingSubscriber> list = FXCollections.observableArrayList(subscribers);
@@ -213,164 +185,44 @@ public class AttendantController implements Initializable {
 		});
 	}
 
-	@FXML
-	private void handleAssistAction() {
-		String code = txtAssistCode.getText().trim();
-		String action = comboAssistAction.getValue();
-
-		if (code.isEmpty() || action == null) {
-			showAlert("Error", "Please enter code and select action");
-			return;
-		}
-
-		switch (action) {
-		case "Help with Entry":
-			assistWithEntry(code);
-			break;
-
-		case "Help with Exit":
-			Message exitMsg = new Message(MessageType.EXIT_PARKING, code);
-			BParkClientApp.sendMessage(exitMsg);
-			break;
-
-		case "Lost Code Recovery":
-			Message lostMsg = new Message(MessageType.REQUEST_LOST_CODE, code);
-			BParkClientApp.sendMessage(lostMsg);
-			break;
-
-		case "Extend Parking Time":
-			showExtensionDialog(code);
-			break;
-		}
-	}
-
-	@FXML
-	private void handleManualEntry() {
-		TextInputDialog dialog = new TextInputDialog();
-		dialog.setTitle("Manual Parking Entry");
-		dialog.setHeaderText("Enter subscriber username for immediate parking:");
-		dialog.setContentText("Username:");
-
-		dialog.showAndWait().ifPresent(username -> {
-			if (!username.trim().isEmpty()) {
-				Message msg = new Message(MessageType.ENTER_PARKING, username);
-				BParkClientApp.sendMessage(msg);
-			}
-		});
-	}
-
-	@FXML
-	private void handleViewSubscriberDetails() {
-		ParkingOrder selectedOrder = tableActiveParkings.getSelectionModel().getSelectedItem();
-		if (selectedOrder != null) {
-			String subscriberName = selectedOrder.getSubscriberName();
-			Message msg = new Message(MessageType.GET_SUBSCRIBER_BY_NAME, subscriberName);
-			BParkClientApp.sendMessage(msg);
-		} else {
-			showAlert("Selection Required", "Please select a parking session from the table");
-		}
-	}
-
-	@FXML
-	private void clearRegistrationForm() {
-		txtName.clear();
-		txtPhone.clear();
-		txtEmail.clear();
-		txtCarNumber.clear();
-		txtUsername.clear();
-		lblRegistrationStatus.setText("");
-	}
-
-	// ===== Helper Methods =====
-
+	/**
+	 * Validates the registration form fields.
+	 *
+	 * @return true if all required fields are valid, false otherwise.
+	 */
 	private boolean validateRegistrationForm() {
 		if (txtName.getText().trim().isEmpty()) {
 			showError("Validation Error", "Name is required");
 			return false;
 		}
-
 		if (txtPhone.getText().trim().isEmpty()) {
 			showError("Validation Error", "Phone number is required");
 			return false;
 		}
-
 		if (txtEmail.getText().trim().isEmpty()) {
 			showError("Validation Error", "Email is required");
 			return false;
 		}
-
 		if (txtUsername.getText().trim().isEmpty()) {
 			showError("Validation Error", "Username is required");
 			return false;
 		}
-
-		// Basic email validation
 		if (!txtEmail.getText().matches(".+@.+\\..+")) {
 			showError("Validation Error", "Invalid email format");
 			return false;
 		}
-
-		// Phone validation (Israeli format)
 		if (!txtPhone.getText().matches("0\\d{9}|\\+972\\d{9}")) {
 			showError("Validation Error", "Invalid phone format (use 0XXXXXXXXX or +972XXXXXXXXX)");
 			return false;
 		}
-
 		return true;
 	}
 
-	private void assistWithEntry(String subscriberCode) {
-		// Check if this is a reservation code or subscriber code
-		if (subscriberCode.matches("\\d+") && subscriberCode.length() == 6) {
-			// Looks like a reservation code
-			Message msg = new Message(MessageType.ACTIVATE_RESERVATION, subscriberCode);
-			BParkClientApp.sendMessage(msg);
-		} else {
-			// Treat as subscriber username
-			Message msg = new Message(MessageType.ENTER_PARKING, subscriberCode);
-			BParkClientApp.sendMessage(msg);
-		}
-	}
-
-	private void showExtensionDialog(String parkingCode) {
-		ChoiceDialog<String> dialog = new ChoiceDialog<>("1", "1", "2", "3", "4");
-		dialog.setTitle("Extend Parking");
-		dialog.setHeaderText("Extend parking for code: " + parkingCode);
-		dialog.setContentText("Extension hours:");
-
-		dialog.showAndWait().ifPresent(hours -> {
-			String extensionData = parkingCode + "," + hours;
-			Message msg = new Message(MessageType.EXTEND_PARKING, extensionData);
-			BParkClientApp.sendMessage(msg);
-		});
-	}
-
-//    private void showSubscriberDetails(ParkingOrder parkingOrder) {
-//        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-//        alert.setTitle("Parking Session Details");
-//        alert.setHeaderText("Details for " + parkingOrder.getSubscriberName());
-//        
-//        String details = String.format(
-//            "Parking Code: %s\n" +
-//            "Spot: %s\n" +
-//            "Entry Time: %s\n" +
-//            "Expected Exit: %s\n" +
-//            "Type: %s\n" +
-//            "Status: %s\n" +
-//            "Duration: %s",
-//            parkingOrder.getParkingCode(),
-//            parkingOrder.getSpotNumber(),
-//            parkingOrder.getFormattedEntryTime(),
-//            parkingOrder.getFormattedExpectedExitTime(),
-//            parkingOrder.getOrderType(),
-//            parkingOrder.getStatus(),
-//            parkingOrder.getParkingDurationFormatted()
-//        );
-//        
-//        alert.setContentText(details);
-//        alert.showAndWait();
-//    }
-
+	/**
+	 * Displays a detailed alert with subscriber info.
+	 *
+	 * @param parkingSubscriber The subscriber to show.
+	 */
 	public void showSubscriberDetails(ParkingSubscriber parkingSubscriber) {
 		Platform.runLater(() -> {
 			Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -387,20 +239,27 @@ public class AttendantController implements Initializable {
 		});
 	}
 
-	// ===== UI Update Methods =====
-
+	/**
+	 * Displays a registration success message.
+	 *
+	 * @param message Message to show.
+	 */
 	public void showRegistrationSuccess(String message) {
 		Platform.runLater(() -> {
 			lblRegistrationStatus.setText("✓ " + message);
 			lblRegistrationStatus.setStyle("-fx-text-fill: green;");
 			clearRegistrationForm();
 
-			// Clear success message after 5 seconds
 			Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> lblRegistrationStatus.setText("")));
 			timeline.play();
 		});
 	}
 
+	/**
+	 * Displays a registration error message.
+	 *
+	 * @param message Message to show.
+	 */
 	public void showRegistrationError(String message) {
 		Platform.runLater(() -> {
 			lblRegistrationStatus.setText("✗ " + message);
@@ -408,8 +267,12 @@ public class AttendantController implements Initializable {
 		});
 	}
 
-	// ===== Utility Methods =====
-
+	/**
+	 * Shows a generic info alert.
+	 *
+	 * @param title   Alert title.
+	 * @param content Alert content.
+	 */
 	private void showAlert(String title, String content) {
 		Alert alert = new Alert(Alert.AlertType.INFORMATION);
 		alert.setTitle(title);
@@ -418,6 +281,12 @@ public class AttendantController implements Initializable {
 		alert.showAndWait();
 	}
 
+	/**
+	 * Shows an error alert.
+	 *
+	 * @param title   Alert title.
+	 * @param content Alert content.
+	 */
 	private void showError(String title, String content) {
 		Alert alert = new Alert(Alert.AlertType.ERROR);
 		alert.setTitle(title);
@@ -426,6 +295,74 @@ public class AttendantController implements Initializable {
 		alert.showAndWait();
 	}
 
+	// ====== Action Handlers ======
+
+	/**
+	 * Sends a REGISTER_SUBSCRIBER message with form data.
+	 */
+	@FXML
+	private void handleRegisterSubscriber() {
+		if (!validateRegistrationForm()) {
+			return;
+		}
+
+		String registrationData = String.format("%s,%s,%s,%s,%s,%s", BParkClientApp.getCurrentUser(),
+				txtName.getText().trim(), txtPhone.getText().trim(), txtEmail.getText().trim(),
+				txtCarNumber.getText().trim(), txtUsername.getText().trim());
+
+		Message msg = new Message(MessageType.REGISTER_SUBSCRIBER, registrationData);
+		BParkClientApp.sendMessage(msg);
+	}
+
+	/**
+	 * Generates a username suggestion from the subscriber's name.
+	 */
+	@FXML
+	private void handleGenerateUsername() {
+		String baseName = txtName.getText().trim();
+		if (baseName.isEmpty()) {
+			showAlert("Error", "Please enter subscriber name first");
+			return;
+		}
+
+		String suggestion = baseName.toLowerCase().replaceAll("[^a-z0-9]", "");
+		txtUsername.setText(suggestion);
+	}
+
+	/**
+	 * Sends GET_ACTIVE_PARKINGS message to server.
+	 */
+	@FXML
+	private void loadActiveParkings() {
+		Message msg = new Message(MessageType.GET_ACTIVE_PARKINGS, null);
+		BParkClientApp.sendMessage(msg);
+	}
+
+	/**
+	 * Sends GET_ALL_SUBSCRIBERS message to server.
+	 */
+	@FXML
+	private void loadSubscribers() {
+		Message msg = new Message(MessageType.GET_ALL_SUBSCRIBERS, null);
+		BParkClientApp.sendMessage(msg);
+	}
+
+	/**
+	 * Clears the registration form fields.
+	 */
+	@FXML
+	private void clearRegistrationForm() {
+		txtName.clear();
+		txtPhone.clear();
+		txtEmail.clear();
+		txtCarNumber.clear();
+		txtUsername.clear();
+		lblRegistrationStatus.setText("");
+	}
+
+	/**
+	 * Disconnects and exits the application.
+	 */
 	@FXML
 	private void handleLogout() {
 		BParkClientApp.disconnect();

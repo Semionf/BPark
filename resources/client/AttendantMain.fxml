@@ -40,7 +40,7 @@
 		</VBox>
 	</top>
 
-	<!-- Main Content  -->
+	<!-- Main Content -->
 	<center>
 		<TabPane tabClosingPolicy="UNAVAILABLE">
 
@@ -102,7 +102,8 @@
 								onAction="#handleRegisterSubscriber" styleClass="primary-button"
 								prefWidth="150" />
 							<Button text="Clear Form"
-								onAction="#clearRegistrationForm" prefWidth="10" />
+								onAction="#clearRegistrationForm" styleClass="primary-button"
+								prefWidth="150" />
 						</HBox>
 
 						<Label fx:id="lblRegistrationStatus" />
@@ -140,7 +141,9 @@
 								prefWidth="135" />
 							<TableColumn fx:id="colExpectedExit"
 								text="Expected Exit" prefWidth="135" />
-							<TableColumn fx:id="colType" text="Type"
+							<TableColumn fx:id="colType" text="Order?"
+								prefWidth="110" />
+							<TableColumn fx:id="colCode" text="user Code"
 								prefWidth="110" />
 						</columns>
 					</TableView>
