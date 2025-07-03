@@ -28,19 +28,31 @@ import serverGUI.ServerPortFrame;
 
 public class ParkingServer extends AbstractServer {
 
-    final public static Integer DEFAULT_PORT = 5555;
+
+
+        final public static Integer DEFAULT_PORT = 5555;
 
     public static ParkingController parkingController;
     public static ReportController reportController;
     public static ServerPortFrame spf;
 
+    
+    
     public Map<ConnectionToClient, String> clientsMap = new HashMap<>();
     public static String serverIp;
 
+    
     private ScheduledExecutorService connectionPoolTimer;
     private final int POOL_SIZE = 5;
     private final int TIMER_INTERVAL = 30;
 
+    
+    
+    
+    
+    
+    
+    
     public ParkingServer(int port) {
         super(port);
         try {
@@ -51,6 +63,9 @@ public class ParkingServer extends AbstractServer {
         initializeConnectionPool();
     }
 
+    
+    
+    
     private void initializeConnectionPool() {
         connectionPoolTimer = Executors.newScheduledThreadPool(POOL_SIZE);
         connectionPoolTimer.scheduleAtFixedRate(() -> {
@@ -61,18 +76,29 @@ public class ParkingServer extends AbstractServer {
         }, 0, TIMER_INTERVAL, TimeUnit.SECONDS);
     }
 
-    private synchronized void cleanupInactiveConnections() {
-        clientsMap.entrySet().removeIf(entry -> !entry.getKey().isAlive());
-    }
+	private synchronized void cleanupInactiveConnections() {
+		clientsMap.entrySet().removeIf(entry -> {
+			ConnectionToClient client = entry.getKey();
+			return !client.isAlive();
+		});
+	}
 
+	
+	
+	
+	
+	
+	
     public synchronized void handleMessageFromClient(Object msg, ConnectionToClient client) {
         System.out.println("Message received: " + msg + " from " + client);
 
         try {
+        	
             if (msg instanceof byte[]) {
                 msg = deserialize(msg);
             }
 
+            
             if (msg instanceof Message) {
                 handleMessageObject((Message) msg, client);
             } else if (msg instanceof String) {
@@ -83,8 +109,10 @@ public class ParkingServer extends AbstractServer {
             System.err.println("General error in handleMessageFromClient: " + e.getMessage());
             e.printStackTrace();
         }
+        
     }
 
+    
     private synchronized void handleMessageObject(Message message, ConnectionToClient client) throws IOException {
         Message ret;
 
@@ -213,6 +241,7 @@ public class ParkingServer extends AbstractServer {
     				client.sendToClient(serialize(ret));
     				break;
 
+    				
     			case CANCEL_RESERVATION:
     				// Expected format: "userName,reservationCode"
     				String[] cancelData = ((String) message.getContent()).split(",", 2);
@@ -355,7 +384,6 @@ public class ParkingServer extends AbstractServer {
         Message ret = new Message(MessageType.ACTIVATE_RESERVATION_KIOSK_RESPONSE, activateResult);
         client.sendToClient(serialize(ret));
     }
-
     private synchronized void handleStringMessage(String message, ConnectionToClient client) {
         String[] arr = message.split("\\s");
 
@@ -379,6 +407,7 @@ public class ParkingServer extends AbstractServer {
         }
     }
 
+    
     private byte[] serialize(Message msg) {
         try {
             ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
@@ -423,7 +452,9 @@ public class ParkingServer extends AbstractServer {
     @Override
     protected synchronized void clientConnected(ConnectionToClient client) {
         String clientIP = client.getInetAddress().getHostAddress();
-        String connectionStatus = "ClientIP: " + clientIP + " status: connected";
+        
+        String connectionStatus = "ClientIP: " + clientIP 
+        		+ " status: connected";
         synchronized (clientsMap) {
             clientsMap.put(client, connectionStatus);
         }

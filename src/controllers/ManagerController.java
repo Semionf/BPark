@@ -27,6 +27,7 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -172,6 +173,9 @@ public class ManagerController implements Initializable {
 	// Attendant Controller (if using include)
 	@FXML
 	private AttendantController attendantController;
+	
+	@FXML
+	private Button btnRefresh;
 
 	private Timeline refreshTimeline;
 	private ObservableList<ParkingReport> currentReports = FXCollections.observableArrayList();
@@ -637,6 +641,45 @@ public class ManagerController implements Initializable {
 			ObservableList<ParkingSubscriber> list = FXCollections.observableArrayList(subscribers);
 			tableSubscribers.setItems(list);
 		});
+	}
+	/**
+	 * Updates the parking status with detailed information
+	 */
+	public void updateDetailedParkingStatus(int occupied, int available, int activeReservations) {
+	    Platform.runLater(() -> {
+	        if (lblOccupied != null) {
+	            lblOccupied.setText(String.valueOf(occupied));
+	        }
+	        
+	        if (lblAvailable != null) {
+	            lblAvailable.setText(String.valueOf(available));
+	        }
+	        
+	        if (lblReservations != null) {
+	            lblReservations.setText(String.valueOf(activeReservations));
+	        }
+	        
+	        // Update system status based on availability
+	        if (lblSystemStatus != null) {
+	            if (available < 10) {
+	                lblSystemStatus.setText("System Status: Nearly Full");
+	                lblSystemStatus.setStyle("-fx-text-fill: #E74C3C;");
+	            } else if (available < 40) {
+	                lblSystemStatus.setText("System Status: Limited Availability");
+	                lblSystemStatus.setStyle("-fx-text-fill: #F39C12;");
+	            } else {
+	                lblSystemStatus.setText("System Status: Operational");
+	                lblSystemStatus.setStyle("-fx-text-fill: #27AE60;");
+	            }
+	        }
+	        
+	        updateLastRefreshTime();
+	    });
+	}
+
+	@FXML
+	private void refreshParkingStatus() {
+	    checkParkingStatus();
 	}
 
 	// =======================

@@ -16,7 +16,15 @@ import entities.ParkingSubscriber;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.Alert;
+
+
+import controllers.ParkingHistoryController;
+
+import controllers.SubscriberController;
+
+
 import controllers.KioskController;
+
 
 public class ClientMessageHandler {
 
@@ -203,9 +211,39 @@ public class ClientMessageHandler {
     }
 
     private static void handleParkingAvailability(Message message) {
-        Integer availableSpots = (Integer) message.getContent();
+
+    String statusData = (String) message.getContent();
+    
+    if (statusData.contains(",")) {
+        // New detailed format: "occupied,available,activeReservations"
+        String[] parts = statusData.split(",");
+        if (parts.length == 3) {
+            int occupied = Integer.parseInt(parts[0]);
+            int available = Integer.parseInt(parts[1]);
+            int activeReservations = Integer.parseInt(parts[2]);
+            
+            // Update manager dashboard
+            ManagerController managerController = BParkClientApp.getManagerController();
+            if (managerController != null) {
+                managerController.updateDetailedParkingStatus(occupied, available, activeReservations);
+            }
+        }
+    } else {
+        // Legacy format - just available spots
+        Integer availableSpots = Integer.parseInt(statusData);
         showAlert("Parking Availability", "Available spots: " + availableSpots);
     }
+    
+    // Also handle manual check for subscribers
+    if (SubscriberController.isManualCheckRequested()) {
+        String[] parts = statusData.split(",");
+        if (parts.length >= 2) {
+            showAlert("Parking Availability", "Available spots: " + parts[1]);
+        }
+        SubscriberController.setManualCheckRequested(false);
+    }
+}
+    
 
     private static void handleReservationResponse(Message message) {
         String response = (String) message.getContent();
@@ -239,7 +277,21 @@ public class ClientMessageHandler {
     @SuppressWarnings("unchecked")
     private static void handleParkingHistory(Message message) {
         ArrayList<ParkingOrder> history = (ArrayList<ParkingOrder>) message.getContent();
-        System.out.println("Received " + history.size() + " parking records");
+
+        
+        // Update the parking history table in the UI
+        Platform.runLater(() -> {
+            // Check if ParkingHistoryController is active
+            ParkingHistoryController historyController = ParkingHistoryController.getInstance();
+            if (historyController != null) {
+                historyController.updateParkingHistory(history);
+            }
+            
+            // Also update SubscriberController if needed (for the small table in main view)
+            // This is optional - remove if not needed
+            System.out.println("Received " + history.size() + " parking records");
+        });
+
     }
 
     @SuppressWarnings("unchecked")
@@ -368,5 +420,14 @@ public class ClientMessageHandler {
             alert.setContentText(content);
             alert.showAndWait();
         });
+    }
+    
+    private static void handleEnterParkingResponse(Message message) {
+        String response = (String) message.getContent();
+        if (response.contains("successful")) {
+            showAlert("Parking Entry Success", response);
+        } else {
+            showAlert("Parking Entry Failed", response);
+        }
     }
 }

@@ -1,0 +1,370 @@
+/* ManagerMain.css - Complete Stylesheet for Manager Dashboard */
+
+/* ========== Root and Base Styles ========== */
+.root {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: #ECF0F1;
+}
+
+/* ========== Button Styles ========== */
+
+/* Primary button styling (general use) */
+.primary-button {
+    -fx-background-color: linear-gradient(to bottom, #3498DB, #2980B9);
+    -fx-background-radius: 5px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 20px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 6, 0, 0, 2);
+}
+
+.primary-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #2980B9, #21618C);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0, 0, 3);
+}
+
+.primary-button:pressed {
+    -fx-background-color: linear-gradient(to bottom, #21618C, #1B4F72);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 4, 0, 0, 1);
+}
+
+/* Report button styling (orange - in top bar) */
+.report-button {
+    -fx-background-color: linear-gradient(to bottom, #F39C12, #E67E22);
+    -fx-background-radius: 5px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 15px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 6, 0, 0, 2);
+}
+
+.report-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #E67E22, #D35400);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0, 0, 3);
+}
+
+.report-button:pressed {
+    -fx-background-color: linear-gradient(to bottom, #D35400, #BA4A00);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 4, 0, 0, 1);
+}
+
+/* Logout button styling (red) */
+.logout-button {
+    -fx-background-color: linear-gradient(to bottom, #E74C3C, #C0392B);
+    -fx-background-radius: 5px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 15px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 6, 0, 0, 2);
+}
+
+.logout-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #C0392B, #A93226);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0, 0, 3);
+}
+
+.logout-button:pressed {
+    -fx-background-color: linear-gradient(to bottom, #A93226, #922B21);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 4, 0, 0, 1);
+}
+
+/* ========== REFRESH BUTTON WITH ENHANCED EFFECTS ========== */
+.refresh-button {
+    -fx-background-color: linear-gradient(to bottom, #3498DB, #2980B9);
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 20px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 8, 0, 0, 3);
+    -fx-cursor: hand;
+}
+
+/* Hover effect - button grows slightly */
+.refresh-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #2980B9, #21618C);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 12, 0, 0, 4);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+/* Pressed effect - button shrinks with dissolving border frame */
+.refresh-button:pressed {
+    -fx-background-color: linear-gradient(to bottom, #21618C, #1B4F72);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 6, 0, 0, 2);
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+    /* Thin frame that appears on click */
+    -fx-border-color: rgba(255, 255, 255, 0.5);
+    -fx-border-width: 2px;
+    -fx-border-radius: 8px;
+}
+
+/* Loading state for refresh button */
+.refresh-button.loading {
+    -fx-opacity: 0.7;
+    -fx-cursor: wait;
+}
+
+.refresh-button.loading:hover {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+/* ========== Tab Pane Styling ========== */
+.tab-pane {
+    -fx-background-color: transparent;
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: #34495E;
+}
+
+.tab-pane .tab {
+    -fx-background-color: #34495E;
+    -fx-text-fill: white;
+    -fx-padding: 10px 20px;
+}
+
+.tab-pane .tab-label {
+    -fx-text-fill: white;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: #2C3E50;
+    -fx-text-fill: white;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.tab-pane .tab:hover {
+    -fx-background-color: #2C3E50;
+    -fx-text-fill: white;
+}
+
+.tab-pane .tab:hover .tab-label {
+    -fx-text-fill: white;
+}
+
+/* ========== Table View Styling ========== */
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #BDC3C7;
+    -fx-border-width: 1px;
+}
+
+.table-view .column-header {
+    -fx-background-color: #34495E;
+    -fx-padding: 10px;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: white !important;
+    -fx-font-weight: bold;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #34495E;
+}
+
+.table-view .table-row-cell:odd {
+    -fx-background-color: #F8F9FA;
+}
+
+.table-view .table-row-cell:even {
+    -fx-background-color: white;
+}
+
+.table-view .table-row-cell:hover {
+    -fx-background-color: #E3F2FD;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: #3498DB;
+    -fx-text-fill: white;
+}
+
+/* ========== Chart Styling ========== */
+.chart {
+    -fx-background-color: white;
+}
+
+.chart-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C3E50;
+}
+
+.chart-legend {
+    -fx-background-color: transparent;
+}
+
+.chart-plot-background {
+    -fx-background-color: #FAFAFA;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: #E0E0E0;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: #E0E0E0;
+}
+
+/* ========== Titled Pane Styling ========== */
+.titled-pane {
+    -fx-background-color: white;
+    -fx-text-fill: #2C3E50;
+}
+
+.titled-pane > .title {
+    -fx-background-color: #ECF0F1;
+    -fx-padding: 10px;
+    -fx-font-weight: bold;
+}
+
+.titled-pane:expanded > .title {
+    -fx-background-color: #D5DBDB;
+}
+
+.titled-pane > .content {
+    -fx-background-color: white;
+    -fx-padding: 10px;
+}
+
+/* ========== ComboBox Styling ========== */
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #BDC3C7;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+}
+
+.combo-box:hover {
+    -fx-border-color: #3498DB;
+}
+
+.combo-box:focused {
+    -fx-border-color: #3498DB;
+    -fx-border-width: 2px;
+}
+
+/* ========== DatePicker Styling ========== */
+.date-picker {
+    -fx-background-color: white;
+    -fx-border-color: #BDC3C7;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+}
+
+.date-picker:hover {
+    -fx-border-color: #3498DB;
+}
+
+.date-picker:focused {
+    -fx-border-color: #3498DB;
+    -fx-border-width: 2px;
+}
+
+/* ========== TextField Styling ========== */
+.text-field {
+    -fx-background-color: white;
+    -fx-border-color: #BDC3C7;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+    -fx-padding: 5px;
+}
+
+.text-field:hover {
+    -fx-border-color: #3498DB;
+}
+
+.text-field:focused {
+    -fx-border-color: #3498DB;
+    -fx-border-width: 2px;
+}
+
+/* ========== Label Styles ========== */
+.success-label {
+    -fx-text-fill: #27AE60;
+    -fx-font-weight: bold;
+}
+
+.error-label {
+    -fx-text-fill: #E74C3C;
+    -fx-font-weight: bold;
+}
+
+.warning-label {
+    -fx-text-fill: #F39C12;
+    -fx-font-weight: bold;
+}
+
+/* ========== Metric Cards (Dashboard stat boxes) ========== */
+.metric-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);
+}
+
+.metric-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 15, 0, 0, 5);
+}
+
+/* ========== Separator Styling ========== */
+.separator {
+    -fx-background-color: #BDC3C7;
+    -fx-padding: 0.5px;
+}
+
+/* ========== ScrollPane Styling ========== */
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* ========== Tooltip Styling ========== */
+.tooltip {
+    -fx-background-color: rgba(44, 62, 80, 0.95);
+    -fx-background-radius: 5px;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-padding: 5px 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 8, 0, 0, 3);
+}
+
+/* ========== Additional fixes for white text ========== */
+/* Force all tab text to be white */
+.tab-pane .tab .text {
+    -fx-fill: white !important;
+}
+
+/* Ensure nested tabs also have white text */
+.tab-pane .tab-pane .tab {
+    -fx-background-color: #445566;
+}
+
+.tab-pane .tab-pane .tab .text {
+    -fx-fill: white !important;
+}
+
+.tab-pane .tab-pane .tab:selected {
+    -fx-background-color: #34495E;
+}
+
+/* Force table header text to be white */
+.table-column .label {
+    -fx-text-fill: white !important;
+}

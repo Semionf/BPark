@@ -48,13 +48,13 @@ public class SimpleAutoCancellationService {
         System.out.println("Starting automatic monitoring service...");
         System.out.println("Checking every minute for:");
         System.out.println("  - Late preorder reservations (15+ min late = auto-cancel)");
-        System.out.println("  - Late active parkings (15+ min late = notify customer)");
+        System.out.println("  - Late active parkings (immediate notification when overdue)"); // UPDATED description
         
         // Schedule to run every minute
         scheduler.scheduleAtFixedRate(() -> {
             try {
-                checkAndCancelLatePreorders();
-                checkAndNotifyLatePickups();
+                checkAndCancelLatePreorders();   // Still uses 15-minute rule - NO CHANGE
+                checkAndNotifyLatePickups();     // NOW sends emails immediately - CHANGED
             } catch (Exception e) {
                 System.err.println("Error in auto-monitoring service: " + e.getMessage());
             }
@@ -92,7 +92,6 @@ public class SimpleAutoCancellationService {
             FROM parkinginfo pi
             JOIN users u ON pi.User_ID = u.User_ID
             WHERE pi.statusEnum = 'preorder'
-            AND DATE(pi.Estimated_start_time) = CURDATE()
             AND pi.ParkingSpot_ID IS NOT NULL
             AND pi.Estimated_start_time IS NOT NULL
             AND TIMESTAMPDIFF(MINUTE, pi.Estimated_start_time, NOW()) >= ?
@@ -144,66 +143,75 @@ public class SimpleAutoCancellationService {
     /**
      * NEW METHOD: Check for late pickups in active parkings and send notifications
      */
-    private void checkAndNotifyLatePickups() {
-        String query = """
-            SELECT 
-                pi.ParkingInfo_ID,
-                pi.User_ID,
-                pi.ParkingSpot_ID,
-                u.UserName,
-                u.Email,
-                u.Name,
-                u.Phone,
-                TIMESTAMPDIFF(MINUTE, pi.Estimated_end_time, NOW()) as minutes_late,
-                pi.Estimated_end_time,
-                pi.IsLate
-            FROM parkinginfo pi
-            JOIN users u ON pi.User_ID = u.User_ID
-            WHERE pi.statusEnum = 'active'
-            AND pi.Actual_end_time IS NULL
-            AND pi.Estimated_end_time IS NOT NULL
-            AND TIMESTAMPDIFF(MINUTE, pi.Estimated_end_time, NOW()) >= ?
-            AND pi.IsLate = 'no'
-            """;
-        Connection conn = DBController.getInstance().getConnection();
 
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, LATE_THRESHOLD_MINUTES);
+    // In SimpleAutoCancellationService.java, find and replace the checkAndNotifyLatePickups method:
+
+/**
+ * UPDATED: Check for late pickups and notify IMMEDIATELY when overdue
+ * This sends email as soon as parking time expires, not after 15 minutes
+ */
+private void checkAndNotifyLatePickups() {
+    String query = """
+        SELECT 
+            pi.ParkingInfo_ID,
+            pi.User_ID,
+            pi.ParkingSpot_ID,
+            u.UserName,
+            u.Email,
+            u.Name,
+            u.Phone,
+            TIMESTAMPDIFF(MINUTE, pi.Estimated_end_time, NOW()) as minutes_late,
+            pi.Estimated_end_time,
+            pi.IsLate
+        FROM parkinginfo pi
+        JOIN users u ON pi.User_ID = u.User_ID
+        WHERE pi.statusEnum = 'active'
+        AND pi.Actual_end_time IS NULL
+        AND pi.Estimated_end_time IS NOT NULL
+        AND pi.Estimated_end_time < NOW()  -- CHANGED: Just check if past due (removed >= 15 check)
+        AND pi.IsLate = 'no'
+        """;
+    
+    try (PreparedStatement stmt = parkingController.getConnection().prepareStatement(query)) {
+        // REMOVED: stmt.setInt(1, LATE_THRESHOLD_MINUTES); - no parameter needed anymore
+        
+        try (ResultSet rs = stmt.executeQuery()) {
+            int notifiedCount = 0;
+
             
-            try (ResultSet rs = stmt.executeQuery()) {
-                int notifiedCount = 0;
+            while (rs.next()) {
+                int parkingInfoId = rs.getInt("ParkingInfo_ID");
+                String userName = rs.getString("UserName");
+                String userEmail = rs.getString("Email");
+                String fullName = rs.getString("Name");
+                int spotId = rs.getInt("ParkingSpot_ID");
+                int minutesLate = rs.getInt("minutes_late");
                 
-                while (rs.next()) {
-                    int parkingInfoId = rs.getInt("ParkingInfo_ID");
-                    String userName = rs.getString("UserName");
-                    String userEmail = rs.getString("Email");
-                    String fullName = rs.getString("Name");
-                    int spotId = rs.getInt("ParkingSpot_ID");
-                    int minutesLate = rs.getInt("minutes_late");
+                if (markAsLateAndNotify(parkingInfoId, userEmail, fullName)) {
+                    notifiedCount++;
                     
-                    if (markAsLateAndNotify(parkingInfoId, userEmail, fullName)) {
-                        notifiedCount++;
-                        
-                        System.out.println(String.format(
-                            "⏰ LATE PICKUP: Parking %d for %s (Spot %d) - %d minutes late - Email sent",
-                            parkingInfoId, userName, spotId, minutesLate
-                        ));
-                    }
-                }
-                
-                if (notifiedCount > 0) {
                     System.out.println(String.format(
-                        "[%s] Late pickup monitoring: %d customers notified",
-                        getCurrentTimestamp(), notifiedCount
+                        " IMMEDIATE LATE PICKUP: Parking %d for %s (Spot %d) - %d minutes late - Email sent",
+                        parkingInfoId, userName, spotId, minutesLate
                     ));
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Database error during late pickup check: " + e.getMessage());
-        }finally {
-            DBController.getInstance().releaseConnection(conn);
+
+            
+            if (notifiedCount > 0) {
+                System.out.println(String.format(
+                    "[%s] Late pickup monitoring: %d customers notified immediately upon becoming late",
+                    getCurrentTimestamp(), notifiedCount
+                ));
+            }
+
         }
-    }
+    } catch (SQLException e) {
+        System.err.println("Database error during late pickup check: " + e.getMessage());
+    }finally {
+            DBController.getInstance().releaseConnection(conn);
+}
+}
     
     /**
      * Mark parking as late and send email notification

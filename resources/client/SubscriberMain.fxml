@@ -152,6 +152,7 @@
                </VBox>
             </TitledPane>
             
+
             <!-- Parking History Table -->
             <TitledPane text="Recent Parking History" expanded="false">
                <VBox spacing="10">
