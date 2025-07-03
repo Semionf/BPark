@@ -9,11 +9,11 @@ import java.io.Serializable;
  * @author ParkB Team
  * @version 1.0
  */
-
 public class Message implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	// Class variables *************************************************
+
 	/**
 	 * The message type for parking system operations
 	 */
@@ -29,201 +29,145 @@ public class Message implements Serializable {
 	 * The message type enumeration for parking system operations.
 	 */
 	public enum MessageType {
-		/**
-		 * Register new subscriber request
-		 */
+		// General operations
+		/** Register new subscriber request */
 		REGISTER_SUBSCRIBER,
-		/**
-		 * Registration response
-		 */
+		/** Registration response */
 		REGISTRATION_RESPONSE,
-		/**
-		 * Generate unique username request
-		 */
+		/** Generate unique username request */
 		GENERATE_USERNAME,
-		/**
-		 * Generated username response
-		 */
+		/** Generated username response */
 		USERNAME_RESPONSE,
-
-		/**
-		 * Subscriber login request
-		 */
+		/** Subscriber login request */
 		SUBSCRIBER_LOGIN,
-		/**
-		 * Subscriber login response
-		 */
+		/** Subscriber login response */
 		SUBSCRIBER_LOGIN_RESPONSE,
-		/**
-		 * Check parking availability
-		 */
+
+		// Parking operations
+		/** Check parking availability */
 		CHECK_PARKING_AVAILABILITY,
-		/**
-		 * Parking availability response
-		 */
+		/** Parking availability response */
 		PARKING_AVAILABILITY_RESPONSE,
-		/**
-		 * Reserve parking spot
-		 */
+		/** Reserve parking spot */
 		RESERVE_PARKING,
-		/**
-		 * Reservation response
-		 */
+		/** Reservation response */
 		RESERVATION_RESPONSE,
-		/**
-		 * Enter parking request
-		 */
+		/** Enter parking request */
 		ENTER_PARKING,
-		/**
-		 * Enter parking response
-		 */
+		/** Enter parking response */
 		ENTER_PARKING_RESPONSE,
-		/**
-		 * Exit parking request
-		 */
+		/** Exit parking request */
 		EXIT_PARKING,
-		/**
-		 * Exit parking response
-		 */
+		/** Exit parking response */
 		EXIT_PARKING_RESPONSE,
-		/**
-		 * Extend parking time
-		 */
+		/** Extend parking time */
 		EXTEND_PARKING,
-		/**
-		 * Extend parking response
-		 */
+		/** Extend parking response */
 		EXTEND_PARKING_RESPONSE,
-		/**
-		 * Request lost parking code
-		 */
+		/** Request lost parking code */
 		REQUEST_LOST_CODE,
-		/**
-		 * Lost code response
-		 */
+		/** Lost code response */
 		LOST_CODE_RESPONSE,
-		/**
-		 * Get parking history
-		 */
+		/** Get parking history */
 		GET_PARKING_HISTORY,
-		/**
-		 * Parking history response
-		 */
+		/** Parking history response */
 		PARKING_HISTORY_RESPONSE,
-		/**
-		 * Manager login request
-		 */
+
+		// Manager operations
+		/** Manager login request */
 		MANAGER_LOGIN,
-		/**
-		 * Manager login response
-		 */
+		/** Manager login response */
 		MANAGER_LOGIN_RESPONSE,
-		/**
-		 * Get active parkings (for attendant)
-		 */
+		/** Get active parkings (for attendant) */
 		GET_ACTIVE_PARKINGS,
-		/**
-		 * Active parkings response
-		 */
+		/** Active parkings response */
 		ACTIVE_PARKINGS_RESPONSE,
-		/**
-		 * Manager get reports request
-		 */
+		/** Manager get reports request */
 		MANAGER_GET_REPORTS,
-		/**
-		 * Manager send reports response
-		 */
+		/** Manager send reports response */
 		MANAGER_SEND_REPORTS,
-		/**
-		 * Update subscriber information
-		 */
+		/** Update subscriber information */
 		UPDATE_SUBSCRIBER_INFO,
-		/**
-		 * Update subscriber response
-		 */
+		/** Update subscriber response */
 		UPDATE_SUBSCRIBER_RESPONSE,
-		/**
-		 * Generate monthly reports
-		 */
+		/** Generate monthly reports */
 		GENERATE_MONTHLY_REPORTS,
-		/**
-		 * Monthly reports response
-		 */
+		/** Monthly reports response */
 		MONTHLY_REPORTS_RESPONSE,
 
-		/**
-		 * Get available time slots for a date/time (15-minute precision)
-		 */
+		// Reservations
+		/** Get available time slots for a date/time (15-minute precision) */
 		GET_TIME_SLOTS,
-		/**
-		 * Time slots response
-		 */
+		/** Time slots response */
 		TIME_SLOTS_RESPONSE,
-		/**
-		 * Make pre-booking reservation (DATETIME format)
-		 */
+		/** Make pre-booking reservation (DATETIME format) */
 		MAKE_PREBOOKING,
-		/**
-		 * Pre-booking response
-		 */
+		/** Pre-booking response */
 		PREBOOKING_RESPONSE,
-		/**
-		 * Spontaneous parking entry (immediate spot assignment)
-		 */
+		/** Spontaneous parking entry (immediate spot assignment) */
 		SPONTANEOUS_PARKING,
-		/**
-		 * Spontaneous parking response
-		 */
+		/** Spontaneous parking response */
 		SPONTANEOUS_RESPONSE,
-		/**
-		 * Request parking extension (during last hour)
-		 */
+		/** Request parking extension (during last hour) */
 		REQUEST_EXTENSION,
-		/**
-		 * Extension response
-		 */
+		/** Extension response */
 		EXTENSION_RESPONSE,
-		/**
-		 * Get system status
-		 */
+		/** Get system status */
 		GET_SYSTEM_STATUS,
-		/**
-		 * System status response
-		 */
+		/** System status response */
 		SYSTEM_STATUS_RESPONSE,
 
-		/**
-		 * Activate reservation when arriving
-		 */
+		// Activation & cancellation
+		/** Activate reservation when arriving */
 		ACTIVATE_RESERVATION,
-		/**
-		 * Activation response
-		 */
+		/** Activation response */
 		ACTIVATION_RESPONSE,
-		/**
-		 * Cancel reservation
-		 */
+		/** Cancel reservation */
 		CANCEL_RESERVATION,
-		/**
-		 * Cancellation response
-		 */
+		/** Cancellation response */
 		CANCELLATION_RESPONSE,
 
+		// Kiosk-specific operations
+		/** Kiosk login response */
+		KIOSK_LOGIN_RESPONSE,
+		/** Kiosk RF Login */
+		KIOSK_RF_LOGIN,
+		/** Kiosk ID Login */
+		KIOSK_ID_LOGIN,
+		/** Kiosk enter parking request */
+		ENTER_PARKING_KIOSK,
+		/** Kiosk enter parking response */
+		ENTER_PARKING_KIOSK_RESPONSE,
+		/** Kiosk retrieve car request */
+		RETRIEVE_CAR_KIOSK,
+		/** Kiosk retrieve car response */
+		RETRIEVE_CAR_KIOSK_RESPONSE,
+		/** Kiosk forgot code request */
+		FORGOT_CODE_KIOSK,
+		/** Kiosk forgot code response */
+		FORGOT_CODE_KIOSK_RESPONSE,
+		/** Kiosk requests to activate a pre-booked reservation if valid */
+		ACTIVATE_RESERVATION_KIOSK,
+		/** Server responds to kiosk reservation activation request */
+		ACTIVATE_RESERVATION_KIOSK_RESPONSE,
+
+		// Additional subscriber operations
+		/** Get subscriber by name */
 		GET_SUBSCRIBER_BY_NAME,
-
+		/** Get all subscribers */
 		GET_ALL_SUBSCRIBERS,
-
+		/** Show all subscribers in a table */
 		SHOW_ALL_SUBSCRIBERS,
-
+		/** Show detailed subscriber profile */
 		SHOW_SUBSCRIBER_DETAILS,
-
+		/** Request subscriber data (for profile update) */
 		REQUEST_SUBSCRIBER_DATA,
-
-		SUBSCRIBER_DATA_RESPONSE,
-
+		/** Subscriber data response */
+		SUBSCRIBER_DATA_RESPONSE
 	}
 
 	// Constructors ******************************************************
+
 	/**
 	 * Constructs a new Message with the specified type and content.
 	 * 

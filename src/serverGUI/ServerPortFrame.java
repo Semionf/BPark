@@ -138,7 +138,7 @@ public class ServerPortFrame extends Application {
             systemInfo += "Username: root\n";
             systemInfo += "Server IP: " + ParkingServer.serverIp + "\n";
             systemInfo += "Port: " + ParkingServer.DEFAULT_PORT + "\n";
-            systemInfo += "Parking Spots: 100 (Auto-initialized)\n";
+            systemInfo += "Parking Spots: 10 (Auto-initialized)\n";
             
             // Add auto-cancellation status
             systemInfo += "Auto-Cancellation: ACTIVE (15-min rule)\n";

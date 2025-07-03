@@ -1,8 +1,28 @@
 package controllers;
 
+
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
+import javafx.scene.layout.GridPane;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import java.io.IOException;
+
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+
 import java.util.ResourceBundle;
 
 import client.BParkClientApp;
@@ -41,6 +61,7 @@ public class SubscriberController implements Initializable {
     // Parking entry/exit controls
     @FXML private TextField txtParkingCode;
     @FXML private TextField txtSubscriberCode;
+    @FXML private TextField txtCancelCode;
     @FXML private Label lblAvailableSpots;
     @FXML private Label lblUserInfo;
     
@@ -59,6 +80,8 @@ public class SubscriberController implements Initializable {
     
     private static boolean manualCheckRequested = false;
     
+    
+    
     public static void setManualCheckRequested(boolean value) {
         manualCheckRequested = value;
     }
@@ -74,10 +97,12 @@ public class SubscriberController implements Initializable {
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
         setupUI();
         if (BParkClientApp.getCurrentUser() != null) {
             setUserName(BParkClientApp.getCurrentUser());
         }
+
        
     }
     
@@ -107,9 +132,27 @@ public class SubscriberController implements Initializable {
         
     }
     
+    public void loadHomeView() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/HomeView.fxml"));
+            Parent homeView = loader.load();
+            mainContent.getChildren().clear();
+            mainContent.getChildren().add(homeView);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+
+    
 
     
     // ===== Action Handlers =====
+    
+    @FXML
+    private void handleGoHome() {
+        loadHomeView();
+    }
     
     @FXML
     private void handleShowAvailableSpots() {
@@ -181,20 +224,44 @@ public class SubscriberController implements Initializable {
         });
     }
     
+//    @FXML
+//    private void handleCancelReservation() {
+//        TextInputDialog dialog = new TextInputDialog();
+//        dialog.setTitle("Cancel Reservation");
+//        dialog.setHeaderText("Enter reservation code to cancel:");
+//        dialog.setContentText("Code:");
+//        
+//        dialog.showAndWait().ifPresent(code -> {
+//            if (!code.trim().isEmpty()) {
+//                String cancellationData = BParkClientApp.getCurrentUser() + "," + code;
+//                Message msg = new Message(MessageType.CANCEL_RESERVATION, cancellationData);
+//                BParkClientApp.sendMessage(msg);
+//            }
+//        });
+//    }
+    
     @FXML
-    private void handleCancelReservation() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Cancel Reservation");
-        dialog.setHeaderText("Enter reservation code to cancel:");
-        dialog.setContentText("Code:");
-        
-        dialog.showAndWait().ifPresent(code -> {
-            if (!code.trim().isEmpty()) {
+    private void handleCancelReservationFromPage() {
+        String code = txtCancelCode.getText();
+
+        if (code != null && !code.trim().isEmpty()) {
+            // Step 1: Show confirmation alert
+            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmAlert.setTitle("Confirm Cancellation");
+            confirmAlert.setHeaderText("Are you sure you want to cancel your reservation?");
+            confirmAlert.setContentText("Reservation code: " + code);
+
+            // Step 2: Wait for user response
+            Optional<ButtonType> result = confirmAlert.showAndWait();
+
+            // Step 3: If user confirms, proceed with cancellation
+            if (result.isPresent() && result.get() == ButtonType.OK) {
                 String cancellationData = BParkClientApp.getCurrentUser() + "," + code;
                 Message msg = new Message(MessageType.CANCEL_RESERVATION, cancellationData);
                 BParkClientApp.sendMessage(msg);
+                txtCancelCode.clear();
             }
-        });
+        }
     }
     
     @FXML
@@ -257,8 +324,35 @@ public class SubscriberController implements Initializable {
     
     @FXML
     private void showReservationView() {
-        // Show reservation section
-        showAlert("Make Reservation", "Select date and time for your reservation");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/ReservationView.fxml"));
+            Parent reservationView = loader.load();
+
+            mainContent.getChildren().clear();
+            mainContent.getChildren().add(reservationView);
+
+            setupUI();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void setupReservationForm() {
+        datePickerReservation.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                LocalDate today = LocalDate.now();
+                setDisable(empty || date.isBefore(today.plusDays(1)) || date.isAfter(today.plusDays(7)));
+            }
+        });
+
+        comboTimeSlot.getItems().clear();
+        LocalTime time = LocalTime.of(6, 0); // from 06:00
+        while (!time.isAfter(LocalTime.of(22, 45))) {
+            comboTimeSlot.getItems().add(time.toString());
+            time = time.plusMinutes(15);
+        }
     }
     
     @FXML
@@ -282,7 +376,12 @@ public class SubscriberController implements Initializable {
             lblAvailableSpots.setText("Available Spots: " + spots);
             
             // Update UI based on availability
-            boolean canReserve = spots >= (100 * 0.4); // 40% rule
+
+            boolean canReserve = spots >= (10 * 0.4); // 40% rule
+            if (btnMakeReservation != null) {
+                btnMakeReservation.setDisable(!canReserve);
+            }
+
             if (lblReservationStatus != null && !canReserve) {
                 lblReservationStatus.setText("Reservations unavailable (less than 40% spots free)");
             }

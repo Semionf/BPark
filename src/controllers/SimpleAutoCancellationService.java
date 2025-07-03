@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import server.DBController;
 import services.EmailService;
 
 /**
@@ -95,8 +96,8 @@ public class SimpleAutoCancellationService {
             AND pi.Estimated_start_time IS NOT NULL
             AND TIMESTAMPDIFF(MINUTE, pi.Estimated_start_time, NOW()) >= ?
             """;
-        
-        try (PreparedStatement stmt = parkingController.getConnection().prepareStatement(query)) {
+        Connection conn = DBController.getInstance().getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, LATE_THRESHOLD_MINUTES);
             
             try (ResultSet rs = stmt.executeQuery()) {
@@ -134,12 +135,15 @@ public class SimpleAutoCancellationService {
             }
         } catch (SQLException e) {
             System.err.println("Database error during auto-cancellation: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
     }
     
     /**
      * NEW METHOD: Check for late pickups in active parkings and send notifications
      */
+
     // In SimpleAutoCancellationService.java, find and replace the checkAndNotifyLatePickups method:
 
 /**
@@ -173,6 +177,7 @@ private void checkAndNotifyLatePickups() {
         
         try (ResultSet rs = stmt.executeQuery()) {
             int notifiedCount = 0;
+
             
             while (rs.next()) {
                 int parkingInfoId = rs.getInt("ParkingInfo_ID");
@@ -186,11 +191,12 @@ private void checkAndNotifyLatePickups() {
                     notifiedCount++;
                     
                     System.out.println(String.format(
-                        "⏰ IMMEDIATE LATE PICKUP: Parking %d for %s (Spot %d) - %d minutes late - Email sent",
+                        " IMMEDIATE LATE PICKUP: Parking %d for %s (Spot %d) - %d minutes late - Email sent",
                         parkingInfoId, userName, spotId, minutesLate
                     ));
                 }
             }
+
             
             if (notifiedCount > 0) {
                 System.out.println(String.format(
@@ -198,17 +204,20 @@ private void checkAndNotifyLatePickups() {
                     getCurrentTimestamp(), notifiedCount
                 ));
             }
+
         }
     } catch (SQLException e) {
         System.err.println("Database error during late pickup check: " + e.getMessage());
-    }
+    }finally {
+            DBController.getInstance().releaseConnection(conn);
+}
 }
     
     /**
      * Mark parking as late and send email notification
      */
     private boolean markAsLateAndNotify(int parkingInfoId, String userEmail, String fullName) {
-        Connection conn = parkingController.getConnection();
+    	Connection conn = DBController.getInstance().getConnection();
         
         try {
             // Update IsLate to 'yes'
@@ -236,14 +245,18 @@ private void checkAndNotifyLatePickups() {
         } catch (SQLException e) {
             System.err.println("Error marking parking as late: " + e.getMessage());
             return false;
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
+
     }
     
     /**
      * Cancel a specific late preorder reservation and free up the parking spot
      */
     private boolean cancelLateReservation(int reservationCode, int spotId) {
-        Connection conn = parkingController.getConnection();
+    	Connection conn = DBController.getInstance().getConnection();
+
         
         try {
             conn.setAutoCommit(false);
@@ -294,7 +307,10 @@ private void checkAndNotifyLatePickups() {
                 conn.setAutoCommit(true);
             } catch (SQLException e) {
                 System.err.println("Failed to reset auto-commit: " + e.getMessage());
+            }finally {
+                DBController.getInstance().releaseConnection(conn);
             }
+
         }
     }
     
@@ -307,8 +323,9 @@ private void checkAndNotifyLatePickups() {
             SET statusEnum = 'active', Actual_start_time = NOW()
             WHERE ParkingInfo_ID = ? AND statusEnum = 'preorder'
             """;
-        
-        try (PreparedStatement stmt = parkingController.getConnection().prepareStatement(query)) {
+        Connection conn = DBController.getInstance().getConnection();
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, reservationCode);
             int updated = stmt.executeUpdate();
             
@@ -321,6 +338,8 @@ private void checkAndNotifyLatePickups() {
         } catch (SQLException e) {
             System.err.println("Error activating reservation: " + e.getMessage());
             return false;
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
     }
     
@@ -328,7 +347,8 @@ private void checkAndNotifyLatePickups() {
      * Finish a reservation (change from active to finished when customer exits)
      */
     public boolean finishReservation(int reservationCode, int spotId) {
-        Connection conn = parkingController.getConnection();
+    	Connection conn = DBController.getInstance().getConnection();
+
         
         try {
             conn.setAutoCommit(false);
@@ -380,7 +400,10 @@ private void checkAndNotifyLatePickups() {
                 conn.setAutoCommit(true);
             } catch (SQLException e) {
                 System.err.println("Failed to reset auto-commit: " + e.getMessage());
+            }finally {
+                DBController.getInstance().releaseConnection(conn);
             }
+
         }
     }
     

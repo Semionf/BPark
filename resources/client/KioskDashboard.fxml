@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" spacing="20"
+      xmlns="http://javafx.com/javafx/11.0.1"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="controllers.KioskDashboardController"
+      style="-fx-background-color: linear-gradient(to bottom, #2C3E50, #34495E);"
+      prefHeight="500.0" prefWidth="400.0">
+
+    <padding>
+        <Insets top="40" right="40" bottom="40" left="40"/>
+    </padding>
+
+    <!-- Title Section -->
+    <VBox alignment="CENTER" spacing="10">
+        <Label text="BPark Dashboard" textFill="WHITE">
+            <font>
+                <Font name="System Bold" size="36.0"/>
+            </font>
+        </Label>
+        <Label text="Please choose an action" textFill="#BDC3C7">
+            <font>
+                <Font size="14.0"/>
+            </font>
+        </Label>
+    </VBox>
+
+    <!-- Button Section -->
+    <VBox spacing="20" maxWidth="300"
+          style="-fx-background-color: rgba(255,255,255,0.1); -fx-background-radius: 10;">
+        <padding>
+            <Insets top="30" right="30" bottom="30" left="30"/>
+        </padding>
+
+        <Button fx:id="btnEnterParking"
+                text="Enter Parking"
+                onAction="#handleEnterParking"
+                prefWidth="240" prefHeight="45"
+                style="-fx-background-color: #27AE60; -fx-text-fill: white; -fx-background-radius: 5; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+
+        <Button fx:id="btnRetrieveCar"
+                text="Retrieve Car"
+                onAction="#handleRetrieveCar"
+                prefWidth="240" prefHeight="45"
+                style="-fx-background-color: #E67E22; -fx-text-fill: white; -fx-background-radius: 5; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+
+        <Button fx:id="btnForgotCode"
+                text="Forgot Code"
+                onAction="#handleForgotCode"
+                prefWidth="240" prefHeight="45"
+                style="-fx-background-color: #C0392B; -fx-text-fill: white; -fx-background-radius: 5; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+
+      <Button fx:id="btnActivateReservation"
+        text="Activate Reservation"
+        onAction="#handleActivateReservation"
+        prefWidth="240" prefHeight="45"
+        style="-fx-background-color: #2980B9; -fx-text-fill: white; -fx-background-radius: 5; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+
+        <Button fx:id="btnExit"
+                text="Exit"
+                onAction="#handleExit"
+                prefWidth="240" prefHeight="45"
+                style="-fx-background-color: #7F8C8D; -fx-text-fill: white; -fx-background-radius: 5; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+    </VBox>
+
+    <!-- Footer -->
+    <VBox alignment="CENTER" spacing="5">
+        <Label text="Need help? Contact support@bpark.com" textFill="#95A5A6">
+            <font>
+                <Font size="11.0"/>
+            </font>
+        </Label>
+        <Label text="© 2025 BPark - All rights reserved" textFill="#7F8C8D">
+            <font>
+                <Font size="10.0"/>
+            </font>
+        </Label>
+    </VBox>
+
+</VBox>

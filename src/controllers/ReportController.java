@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 import entities.ParkingReport;
 import server.DBController;
@@ -17,40 +18,13 @@ import server.DBController;
  */
 
 public class ReportController {
-	protected Connection conn;
+//	protected Connection conn;
 	public int successFlag;
 
 	public ReportController(String dbname, String pass) {
 		DBController.initializeConnection(dbname, pass);
-		conn = DBController.getInstance().getConnection();
+//		conn = DBController.getInstance().getConnection();
 	}
-
-	public Connection getConnection() {
-		return conn;
-	}
-
-	/**
-	 * Establishes connection to the MySQL database
-	 */
-//	public void connectToDB(String path, String pass) {
-//		try {
-//			Class.forName("com.mysql.cj.jdbc.Driver");
-//			System.out.println("Driver definition succeed");
-//		} catch (Exception ex) {
-//			System.out.println("Driver definition failed");
-//		}
-//
-//		try {
-//			conn = DriverManager.getConnection(path, "root", pass);
-//			System.out.println("SQL connection succeed");
-//			successFlag = 1;
-//		} catch (SQLException ex) {
-//			System.out.println("SQLException: " + ex.getMessage());
-//			System.out.println("SQLState: " + ex.getSQLState());
-//			System.out.println("VendorError: " + ex.getErrorCode());
-//			successFlag = 2;
-//		}
-//	}
 
 	/**
 	 * Gets parking reports based on report type
@@ -126,6 +100,7 @@ public class ReportController {
 	 */
 	private ParkingReport generateParkingTimeReport() {
 		ParkingReport report = new ParkingReport("PARKING_TIME", LocalDate.now());
+		Connection conn = DBController.getInstance().getConnection();
 
 		String qry = """
 				SELECT
@@ -153,8 +128,21 @@ public class ReportController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error generating parking time report: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
+		report.setTotalParkingTimePerDay(getTotalParkingTimePerDay());
+		report.setHourlyDistribution(getHourlyDistribution());
+		report.setLateExitsByHour(getLateExitsByHour());
+		report.setNoExtensions(getNoExtensions());
+		report.setLateSubscribers(getLateSubscribers());
+		report.setTotalSubscribers(getTotalSubscribers());
+		report.setReservations(getUsedReservations() + getCancelledReservations());
+		report.setUsedReservations(getUsedReservations());
+		report.setCancelledReservations(getCancelledReservations());
+		report.getpreOrderReservations();
+		report.setpreOrderReservations(getPreOrderedReservations());
 		return report;
 	}
 
@@ -164,6 +152,7 @@ public class ReportController {
 	 */
 	private ParkingReport generateSubscriberStatusReport() {
 		ParkingReport report = new ParkingReport("SUBSCRIBER_STATUS", LocalDate.now());
+		Connection conn = DBController.getInstance().getConnection();
 
 		// Get active subscribers count
 		String activeSubQry = """
@@ -225,7 +214,13 @@ public class ReportController {
 
 		} catch (SQLException e) {
 			System.out.println("Error generating subscriber status report: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
+
+		report.setSubscribersPerDay(getSubscribersPerDay());
+		report.setTotalSubscribers(getTotalSubscribers());
+		report.setLateSubscribers(getLateSubscribers());
 
 		return report;
 	}
@@ -235,6 +230,7 @@ public class ReportController {
 	 */
 	private ParkingReport generateMonthlyParkingTimeReport(LocalDate reportDate) {
 		ParkingReport report = new ParkingReport("PARKING_TIME", reportDate);
+		Connection conn = DBController.getInstance().getConnection();
 
 		String qry = """
 				SELECT
@@ -267,6 +263,8 @@ public class ReportController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error generating monthly parking time report: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return null;
@@ -277,6 +275,7 @@ public class ReportController {
 	 */
 	private ParkingReport generateMonthlySubscriberStatusReport(LocalDate reportDate) {
 		ParkingReport report = new ParkingReport("SUBSCRIBER_STATUS", reportDate);
+		Connection conn = DBController.getInstance().getConnection();
 
 		// Get active subscribers for the month
 		String activeSubQry = """
@@ -346,6 +345,8 @@ public class ReportController {
 
 		} catch (SQLException e) {
 			System.out.println("Error generating monthly subscriber status report: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return null;
@@ -356,6 +357,7 @@ public class ReportController {
 	 */
 	private void storeMonthlyReports(ArrayList<ParkingReport> reports) {
 		String qry = "INSERT INTO reports (Report_Type, Generated_Date, Report_Data) VALUES (?, NOW(), ?)";
+		Connection conn = DBController.getInstance().getConnection();
 
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			for (ParkingReport report : reports) {
@@ -366,6 +368,8 @@ public class ReportController {
 			System.out.println("Monthly reports stored successfully");
 		} catch (SQLException e) {
 			System.out.println("Error storing monthly reports: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 	}
 
@@ -374,6 +378,7 @@ public class ReportController {
 	 */
 	public ArrayList<ParkingReport> getHistoricalReports(String reportType, LocalDate fromDate, LocalDate toDate) {
 		ArrayList<ParkingReport> reports = new ArrayList<>();
+		Connection conn = DBController.getInstance().getConnection();
 
 		String qry = """
 				SELECT * FROM reports
@@ -402,6 +407,8 @@ public class ReportController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting historical reports: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return reports;
@@ -412,6 +419,7 @@ public class ReportController {
 	 */
 	public ArrayList<String> getPeakUsageHours() {
 		ArrayList<String> peakHours = new ArrayList<>();
+		Connection conn = DBController.getInstance().getConnection();
 
 		String qry = """
 				SELECT
@@ -435,6 +443,8 @@ public class ReportController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting peak usage hours: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return peakHours;
@@ -445,6 +455,7 @@ public class ReportController {
 	 */
 	public ArrayList<String> getDailyStatistics() {
 		ArrayList<String> dailyStats = new ArrayList<>();
+		Connection conn = DBController.getInstance().getConnection();
 
 		String qry = """
 				SELECT
@@ -474,8 +485,272 @@ public class ReportController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting daily statistics: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return dailyStats;
 	}
+
+	private java.util.Map<String, Integer> getTotalParkingTimePerDay() {
+		java.util.Map<String, Integer> map = new TreeMap<>();
+		String qry = """
+				SELECT
+				  DATE(Actual_start_time) AS day,
+				  CEIL(SUM(TIMESTAMPDIFF(MINUTE, Actual_start_time, Actual_end_time)) / 60) AS total_hours
+				FROM parkinginfo
+				WHERE statusEnum = 'finished'
+				  AND Actual_start_time IS NOT NULL
+				  AND Actual_end_time IS NOT NULL
+				  AND YEAR(Actual_start_time) = YEAR(CURDATE())
+				  AND MONTH(Actual_start_time) = MONTH(CURDATE())
+				GROUP BY day
+				ORDER BY day;
+								""";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					String day = rs.getString("day");
+					int totalHours = rs.getInt("total_hours");
+					map.put(day, totalHours);
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return map;
+	}
+
+	private java.util.Map<String, Integer> getHourlyDistribution() {
+		java.util.Map<String, Integer> map = new TreeMap<>();
+		String qry = """
+				    SELECT HOUR(Actual_start_time) as hour, COUNT(*) as cnt
+				    FROM parkinginfo
+				    WHERE statusEnum = 'finished'
+				    AND Actual_start_time IS NOT NULL
+				    GROUP BY hour
+				    ORDER BY hour
+				""";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					String hour = String.format("%02d:00", rs.getInt("hour"));
+					int cnt = rs.getInt("cnt");
+					map.put(hour, cnt);
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return map;
+	}
+
+	private java.util.Map<String, Integer> getLateExitsByHour() {
+		java.util.Map<String, Integer> map = new TreeMap<>();
+		String qry = """
+				    SELECT HOUR(Actual_end_time) as hour, COUNT(*) as cnt
+				    FROM parkinginfo
+				    WHERE IsLate = 'yes' AND Actual_end_time IS NOT NULL
+				    GROUP BY hour
+				    ORDER BY hour
+				""";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					String hour = String.format("%02d:00", rs.getInt("hour"));
+					int cnt = rs.getInt("cnt");
+					map.put(hour, cnt);
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return map;
+	}
+
+	private java.util.Map<String, Integer> getSubscribersPerDay() {
+		java.util.Map<String, Integer> map = new TreeMap<>();
+		String qry = """
+				    SELECT DATE(Actual_start_time) as day, COUNT(DISTINCT User_ID) as cnt
+				    FROM parkinginfo
+				    WHERE statusEnum IN ('active', 'finished')
+				    AND Actual_start_time IS NOT NULL
+				    GROUP BY day
+				    ORDER BY day
+				""";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					String day = rs.getString("day");
+					int cnt = rs.getInt("cnt");
+					map.put(day, cnt);
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return map;
+	}
+
+	private int getNoExtensions() {
+		String qry = """
+				    SELECT COUNT(*) as noext
+				    FROM parkinginfo
+				    WHERE IsExtended = 'no'
+				    AND statusEnum IN ('active', 'finished')
+				""";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getInt("noext");
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return 0;
+	}
+
+	private int getLateSubscribers() {
+		String qry = """
+				    SELECT COUNT(DISTINCT User_ID) as cnt
+				    FROM parkinginfo
+				    WHERE IsLate = 'yes'
+				""";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getInt("cnt");
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return 0;
+	}
+
+	private int getTotalSubscribers() {
+		String qry = "SELECT COUNT(*) as cnt FROM users";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getInt("cnt");
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return 0;
+	}
+
+	public int getUsedReservations() {
+		int result = 0; // usedReservations
+		Connection conn = DBController.getInstance().getConnection();
+
+		String usedReservationsQry = """
+				    SELECT COUNT(*) as used_reservations
+				    FROM parkinginfo
+				    WHERE IsOrderedEnum = 'yes'
+				    AND statusEnum = 'finished'
+				    AND Date_Of_Placing_Order >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+				""";
+
+		try {
+
+			try (PreparedStatement stmt = conn.prepareStatement(usedReservationsQry)) {
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						result = rs.getInt("used_reservations");
+					}
+				}
+			}
+
+		} catch (SQLException e) {
+			System.out.println("Error getting reservations usage data: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+
+		return result;
+	}
+
+	public int getCancelledReservations() {
+		int result = 0; // cancelledReservations
+		Connection conn = DBController.getInstance().getConnection();
+
+		String cancelledReservationsQry = """
+				    SELECT COUNT(*) as cancelled_reservations
+				    FROM parkinginfo
+				    WHERE IsOrderedEnum = 'yes'
+				    AND statusEnum = 'cancelled'
+				    AND Date_Of_Placing_Order >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+				""";
+
+		try {
+
+			try (PreparedStatement stmt = conn.prepareStatement(cancelledReservationsQry)) {
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						result = rs.getInt("cancelled_reservations");
+					}
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error getting reservations usage data: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return result;
+	}
+
+	public int getPreOrderedReservations() {
+		int result = 0; // cancelledReservations
+		Connection conn = DBController.getInstance().getConnection();
+
+		String cancelledReservationsQry = """
+				    SELECT COUNT(*) as cancelled_reservations
+				    FROM parkinginfo
+				    WHERE IsOrderedEnum = 'yes'
+				    AND statusEnum = 'preorder'
+				    AND Date_Of_Placing_Order >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+				""";
+
+		try {
+
+			try (PreparedStatement stmt = conn.prepareStatement(cancelledReservationsQry)) {
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						result = rs.getInt("cancelled_reservations");
+					}
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error getting reservations usage data: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return result;
+	}
+
 }

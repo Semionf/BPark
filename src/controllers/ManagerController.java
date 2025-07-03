@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import client.BParkClientApp;
@@ -36,7 +37,6 @@ import javafx.util.Duration;
 
 public class ManagerController implements Initializable {
 
-	
 	// Dashboard Labels
 	@FXML
 	private Label lblTotalSpots;
@@ -101,6 +101,43 @@ public class ManagerController implements Initializable {
 	@FXML
 	private DatePicker datePickerTo;
 
+	// --- Parking Report ---
+	@FXML
+	private BarChart<String, Number> chartTotalParkingTimePerDay;
+	@FXML
+	private BarChart<String, Number> chartHourlyDistribution;
+	@FXML
+	private PieChart chartExtensionsPercentage;
+	@FXML
+	private BarChart<String, Number> chartLateExitsByHour;
+	@FXML
+	private PieChart chartLateSubscribersRate;
+	@FXML
+	private Label lblTotalExtensions;
+	@FXML
+	private Label lblTotalLateExits;
+	@FXML
+	private Label lblTotalMonthHours;
+
+	@FXML
+	private Label lblExtensionsPercent;
+	@FXML
+	private Label lblLateSubscriberPercent;
+
+	// --- Subscribers Report ---
+	@FXML
+	private BarChart<String, Number> chartSubscribersPerDay;
+	@FXML
+	private PieChart chartReservationUsage;
+	@FXML
+	private Label lblTotalReservations;
+	@FXML
+	private Label lblCancelledReservations;
+	@FXML
+	private Label lblPreOrderReservations;
+	@FXML
+	private Label lblUsedReservations;
+
 	// Report Labels
 	@FXML
 	private Label lblAvgDuration;
@@ -133,7 +170,7 @@ public class ManagerController implements Initializable {
 	@FXML
 	private Label lblAvgDailyUsage;
 
-	// Embedded Attendant Controller (if using include)
+	// Attendant Controller (if using include)
 	@FXML
 	private AttendantController attendantController;
 	
@@ -192,7 +229,7 @@ public class ManagerController implements Initializable {
 
 		// Set static values
 		if (lblTotalSpots != null) {
-			lblTotalSpots.setText("100");
+			lblTotalSpots.setText("10");
 		}
 		if (tableSubscribers != null) {
 			colSubName.setCellValueFactory(
@@ -296,8 +333,8 @@ public class ManagerController implements Initializable {
 
 	@FXML
 	private void checkParkingStatus() {
-		Message msg = new Message(MessageType.CHECK_PARKING_AVAILABILITY, null);
-		BParkClientApp.sendMessage(msg);
+//		Message msg = new Message(MessageType.CHECK_PARKING_AVAILABILITY, null);
+//		BParkClientApp.sendMessage(msg);
 
 		// Also get active parkings for statistics
 		Message activeMsg = new Message(MessageType.GET_ACTIVE_PARKINGS, null);
@@ -313,7 +350,7 @@ public class ManagerController implements Initializable {
 
 	public void updateParkingStatus(int availableSpots) {
 		Platform.runLater(() -> {
-			int occupied = 100 - availableSpots;
+			int occupied = 10 - availableSpots;
 
 			if (lblOccupied != null) {
 				lblOccupied.setText(String.valueOf(occupied));
@@ -370,6 +407,32 @@ public class ManagerController implements Initializable {
 			lblExtensions
 					.setText(String.format("%d (%.1f%%)", report.getExtensions(), report.getExtensionPercentage()));
 		}
+		if (report.getTotalParkingTimePerDay() != null)
+			updateChartTotalParkingTimePerDay(report.getTotalParkingTimePerDay());
+
+		if (report.getHourlyDistribution() != null)
+			updateChartHourlyDistribution(report.getHourlyDistribution());
+
+		updateChartExtensionsPercentage(report.getExtensions(), report.getNoExtensions(), report.getTotalSubscribers());
+
+		if (report.getLateExitsByHour() != null)
+			updateChartLateExitsByHour(report.getLateExitsByHour());
+
+		updateChartLateSubscribersRate(report.getLateSubscribers(), report.getTotalSubscribers());
+
+		if (lblTotalLateExits != null)
+			lblTotalLateExits.setText("Total Late Exits: " + report.getLateExits());
+
+		if (lblTotalMonthHours != null) {
+			int totalMonthHours = report.getTotalParkingTimePerDay().values().stream().mapToInt(Integer::intValue)
+					.sum();
+			report.setTotalMonthHours(totalMonthHours);
+			lblTotalMonthHours.setText("Total Hours This Month: " + report.getTotalMonthHours());
+
+		}
+
+		updateChartReservationUsage(report.getpreOrderReservations(), report.getUsedReservations(),
+				report.getCancelledReservations());
 
 		// Update parking time chart
 		updateParkingTimeChart(report);
@@ -617,6 +680,86 @@ public class ManagerController implements Initializable {
 	@FXML
 	private void refreshParkingStatus() {
 	    checkParkingStatus();
+	}
+
+	// =======================
+	// Parking Report
+	// =======================
+
+	private void updateChartTotalParkingTimePerDay(java.util.Map<String, Integer> data) {
+		Platform.runLater(() -> {
+			chartTotalParkingTimePerDay.getData().clear();
+			XYChart.Series<String, Number> series = new XYChart.Series<>();
+			series.setName("Total Parking Time Per Day");
+			for (Map.Entry<String, Integer> entry : data.entrySet()) {
+				series.getData().add(new XYChart.Data<>(entry.getKey(), entry.getValue()));
+			}
+			chartTotalParkingTimePerDay.getData().add(series);
+		});
+	}
+
+	private void updateChartHourlyDistribution(java.util.Map<String, Integer> data) {
+		Platform.runLater(() -> {
+			chartHourlyDistribution.getData().clear();
+			XYChart.Series<String, Number> series = new XYChart.Series<>();
+			series.setName("Hourly Distribution");
+			for (Map.Entry<String, Integer> entry : data.entrySet()) {
+				series.getData().add(new XYChart.Data<>(entry.getKey(), entry.getValue()));
+			}
+			chartHourlyDistribution.getData().add(series);
+		});
+	}
+
+	private void updateChartExtensionsPercentage(int extensions, int noExtensions, int totalSubscribers) {
+		Platform.runLater(() -> {
+			ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
+					new PieChart.Data("Extensions", extensions), new PieChart.Data("No Extensions", noExtensions));
+			chartExtensionsPercentage.setData(pieChartData);
+			lblTotalExtensions.setText("Total Extensions: " + extensions);
+
+			int total = extensions + noExtensions;
+			double percent = (total == 0) ? 0 : (extensions * 100.0 / totalSubscribers);
+			lblExtensionsPercent
+					.setText(String.format("%.1f", percent) + "%" + " of Subscribers Extended Their Parking!");
+		});
+	}
+
+	private void updateChartLateExitsByHour(java.util.Map<String, Integer> data) {
+		Platform.runLater(() -> {
+			chartLateExitsByHour.getData().clear();
+			XYChart.Series<String, Number> series = new XYChart.Series<>();
+			series.setName("Late Exits By Hour (from End Time)");
+			for (Map.Entry<String, Integer> entry : data.entrySet()) {
+				series.getData().add(new XYChart.Data<>(entry.getKey(), entry.getValue()));
+			}
+			chartLateExitsByHour.getData().add(series);
+		});
+	}
+
+	private void updateChartLateSubscribersRate(int lateSubscribers, int totalSubscribers) {
+		Platform.runLater(() -> {
+			int onTime = totalSubscribers - lateSubscribers;
+			ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
+					new PieChart.Data("Late", lateSubscribers), new PieChart.Data("On Time", onTime));
+			chartLateSubscribersRate.setData(pieChartData);
+			double percent = (totalSubscribers == 0) ? 0 : (lateSubscribers * 100.0 / totalSubscribers);
+			lblLateSubscriberPercent.setText(String.format("%.1f", percent) + "%" + " of Subscribers are late!");
+		});
+	}
+
+	private void updateChartReservationUsage(int preOrderReservations, int used, int cancelled) {
+		Platform.runLater(() -> {
+			ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
+					new PieChart.Data("Open Reservations", preOrderReservations),
+					new PieChart.Data("Used Reservations", used),
+					new PieChart.Data("Cancelled Reservations", cancelled));
+			chartReservationUsage.setData(pieChartData);
+			lblTotalReservations.setText("Total Reservations: " + (preOrderReservations + used + cancelled));
+			lblUsedReservations.setText("used Reservations: " + used);
+			lblPreOrderReservations.setText("Open Reservations: " + preOrderReservations);
+			lblCancelledReservations.setText("Cancelled Reservations: " + cancelled);
+
+		});
 	}
 
 }

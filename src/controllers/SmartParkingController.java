@@ -18,6 +18,7 @@ import java.util.Random;
 
 import entities.ParkingOrder;
 import entities.ParkingSubscriber;
+import server.DBController;
 
 /**
  * Smart Parking Allocation System with enhanced algorithms
@@ -26,7 +27,7 @@ import entities.ParkingSubscriber;
 public class SmartParkingController {
     
     // Configuration constants
-    private static final int TOTAL_PARKING_SPOTS = 100;
+    private static final int TOTAL_PARKING_SPOTS = 10;
     private static final double AVAILABILITY_THRESHOLD = 0.4; // 40% rule
     private static final int PREFERRED_WINDOW_HOURS = 8;
     private static final int STANDARD_BOOKING_HOURS = 4;
@@ -36,37 +37,37 @@ public class SmartParkingController {
     private static final int MINIMUM_EXTENSION_HOURS = 2;
     private static final int MAXIMUM_EXTENSION_HOURS = 4;
     
-    protected Connection conn;
+//    protected Connection conn;
     public int successFlag;
 
     public SmartParkingController(String dbname, String pass) {
-        String connectPath = "jdbc:mysql://localhost/" + dbname + "?serverTimezone=Asia/Jerusalem";
-        connectToDB(connectPath, pass);
+		DBController.initializeConnection(dbname, pass);
+
     }
 
-    public Connection getConnection() {
-        return conn;
-    }
+//    public Connection getConnection() {
+//        return conn;
+//    }
 
-    public void connectToDB(String path, String pass) {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            System.out.println("Driver definition succeed");
-        } catch (Exception ex) {
-            System.out.println("Driver definition failed");
-        }
-
-        try {
-            conn = DriverManager.getConnection(path, "root", pass);
-            System.out.println("SQL connection succeed");
-            successFlag = 1;
-        } catch (SQLException ex) {
-            System.out.println("SQLException: " + ex.getMessage());
-            System.out.println("SQLState: " + ex.getSQLState());
-            System.out.println("VendorError: " + ex.getErrorCode());
-            successFlag = 2;
-        }
-    }
+//    public void connectToDB(String path, String pass) {
+//        try {
+//            Class.forName("com.mysql.cj.jdbc.Driver");
+//            System.out.println("Driver definition succeed");
+//        } catch (Exception ex) {
+//            System.out.println("Driver definition failed");
+//        }
+//
+//        try {
+//            conn = DriverManager.getConnection(path, "root", pass);
+//            System.out.println("SQL connection succeed");
+//            successFlag = 1;
+//        } catch (SQLException ex) {
+//            System.out.println("SQLException: " + ex.getMessage());
+//            System.out.println("SQLState: " + ex.getSQLState());
+//            System.out.println("VendorError: " + ex.getErrorCode());
+//            successFlag = 2;
+//        }
+//    }
 
     // ========== CORE DATA STRUCTURES ==========
     
@@ -121,7 +122,8 @@ public class SmartParkingController {
     
     public String checkLogin(String userName, String password) {
         String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ?";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setString(1, userName);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -131,13 +133,16 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error checking login: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return "None";
     }
     
     public int getAvailableParkingSpots() {
         String qry = "SELECT COUNT(*) as available FROM ParkingSpot WHERE isOccupied = false";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -146,13 +151,17 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error getting available spots: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
+
         return 0;
     }
     
     public ParkingSubscriber getUserInfo(String userName) {
         String qry = "SELECT * FROM users WHERE UserName = ?";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setString(1, userName);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -170,14 +179,18 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error getting user info: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return null;
     }
     
     public String makeReservation(String userName, String reservationDateStr) {
+    	
         if (!canMakeReservation()) {
             return "Not enough available spots for reservation (need 40% available)";
         }
+        Connection conn = DBController.getInstance().getConnection();
 
         try {
             Date reservationDate = Date.valueOf(reservationDateStr);
@@ -219,6 +232,8 @@ public class SmartParkingController {
         } catch (SQLException e) {
             System.out.println("Error making reservation: " + e.getMessage());
             return "Reservation failed";
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return "Reservation failed";
     }
@@ -243,7 +258,8 @@ public class SmartParkingController {
         LocalDateTime estimatedEnd = now.plusHours(4);
 
         String qry = "INSERT INTO ParkingInfo (ParkingSpot_ID, User_ID, Date, Code, Actual_start_time, Estimated_start_time, Estimated_end_time, IsOrderedEnum, IsLate, IsExtended) VALUES (?, ?, ?, ?, ?, ?, ?, 'not ordered', false, false)";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setInt(1, spotID);
             stmt.setInt(2, userID);
@@ -260,12 +276,15 @@ public class SmartParkingController {
         } catch (SQLException e) {
             System.out.println("Error handling entry: " + e.getMessage());
             return "Entry failed";
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
     }
     
     public String enterParkingWithReservation(int reservationCode) {
         String checkQry = "SELECT r.*, u.User_ID FROM Reservations r JOIN users u ON r.User_ID = u.User_ID WHERE r.Reservation_code = ? AND r.statusEnum = 'active'";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(checkQry)) {
             stmt.setInt(1, reservationCode);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -316,6 +335,8 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error handling reservation entry: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return "Invalid or expired reservation code";
     }
@@ -335,7 +356,8 @@ public class SmartParkingController {
         }
         
         String checkQry = "SELECT COUNT(*) FROM users WHERE UserName = ?";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement checkStmt = conn.prepareStatement(checkQry)) {
             checkStmt.setString(1, userName);
             try (ResultSet rs = checkStmt.executeQuery()) {
@@ -365,6 +387,8 @@ public class SmartParkingController {
         } catch (SQLException e) {
             System.out.println("Registration failed: " + e.getMessage());
             return "Registration failed: " + e.getMessage();
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         
         return "Registration failed: Unknown error";
@@ -388,6 +412,8 @@ public class SmartParkingController {
     }
     
     public String exitParking(String parkingCodeStr) {
+    	Connection conn = DBController.getInstance().getConnection();
+
         try {
             int parkingCode = Integer.parseInt(parkingCodeStr);
             String qry = "SELECT pi.*, ps.ParkingSpot_ID FROM ParkingInfo pi JOIN ParkingSpot ps ON pi.ParkingSpot_ID = ps.ParkingSpot_ID WHERE pi.Code = ? AND pi.Actual_end_time IS NULL";
@@ -430,7 +456,10 @@ public class SmartParkingController {
             return "Invalid parking code format";
         } catch (SQLException e) {
             System.out.println("Error handling exit: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
+
         return "Invalid parking code or already exited";
     }
     
@@ -438,7 +467,8 @@ public class SmartParkingController {
         if (additionalHours < 1 || additionalHours > 4) {
             return "Can only extend parking by 1-4 hours";
         }
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try {
             int parkingCode = Integer.parseInt(parkingCodeStr);
             String qry = "SELECT pi.* FROM ParkingInfo pi WHERE pi.Code = ? AND pi.Actual_end_time IS NULL";
@@ -466,13 +496,16 @@ public class SmartParkingController {
             return "Invalid parking code format";
         } catch (SQLException e) {
             System.out.println("Error extending parking time: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return "Invalid parking code or parking session not active";
     }
     
     public String sendLostParkingCode(String userName) {
         String qry = "SELECT pi.Code, u.Email, u.Phone FROM ParkingInfo pi JOIN users u ON pi.User_ID = u.User_ID WHERE u.UserName = ? AND pi.Actual_end_time IS NULL";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setString(1, userName);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -488,6 +521,8 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error sending lost code: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return "No active parking session found";
     }
@@ -495,7 +530,8 @@ public class SmartParkingController {
     public ArrayList<ParkingOrder> getParkingHistory(String userName) {
         ArrayList<ParkingOrder> history = new ArrayList<>();
         String qry = "SELECT pi.*, ps.ParkingSpot_ID FROM ParkingInfo pi JOIN users u ON pi.User_ID = u.User_ID JOIN ParkingSpot ps ON pi.ParkingSpot_ID = ps.ParkingSpot_ID WHERE u.UserName = ? ORDER BY pi.Date DESC, pi.Actual_start_time DESC";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setString(1, userName);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -530,6 +566,8 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error getting parking history: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return history;
     }
@@ -537,7 +575,8 @@ public class SmartParkingController {
     public ArrayList<ParkingOrder> getActiveParkings() {
         ArrayList<ParkingOrder> activeParkings = new ArrayList<>();
         String qry = "SELECT pi.*, u.Name, ps.ParkingSpot_ID FROM ParkingInfo pi JOIN users u ON pi.User_ID = u.User_ID JOIN ParkingSpot ps ON pi.ParkingSpot_ID = ps.ParkingSpot_ID WHERE pi.Actual_end_time IS NULL ORDER BY pi.Actual_start_time";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -565,7 +604,10 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error getting active parkings: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
+
         return activeParkings;
     }
     
@@ -580,7 +622,8 @@ public class SmartParkingController {
         String email = data[2];
         
         String qry = "UPDATE users SET Phone = ?, Email = ? WHERE UserName = ?";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setString(1, phone);
             stmt.setString(2, email);
@@ -592,13 +635,16 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error updating subscriber info: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return "Failed to update subscriber information";
     }
     
     public String cancelReservation(int reservationCode) {
         String qry = "UPDATE Reservations SET statusEnum = 'cancelled' WHERE Reservation_code = ? AND statusEnum = 'active'";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setInt(1, reservationCode);
             int rowsUpdated = stmt.executeUpdate();
@@ -608,6 +654,8 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error cancelling reservation: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return "Reservation not found or already cancelled";
     }
@@ -617,8 +665,11 @@ public class SmartParkingController {
     }
     
     public void initializeParkingSpots() {
+        Connection conn = DBController.getInstance().getConnection();
+
         try {
             String checkQry = "SELECT COUNT(*) FROM ParkingSpot";
+
             try (PreparedStatement stmt = conn.prepareStatement(checkQry)) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next() && rs.getInt(1) == 0) {
@@ -636,6 +687,8 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error initializing parking spots: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
     }
 
@@ -727,7 +780,8 @@ public class SmartParkingController {
      */
     public String enterSpontaneousParking(String userName) {
         LocalDateTime now = LocalDateTime.now();
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try {
             SpotAllocation allocation = findOptimalSpontaneousAllocation(now);
             if (allocation == null) {
@@ -748,7 +802,7 @@ public class SmartParkingController {
                  Estimated_end_time, IsOrderedEnum, IsLate, IsExtended) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'not ordered', false, false)
                 """;
-            
+
             try (PreparedStatement stmt = conn.prepareStatement(insertQuery)) {
                 stmt.setInt(1, allocation.spotId);
                 stmt.setInt(2, userID);
@@ -769,13 +823,18 @@ public class SmartParkingController {
         } catch (Exception e) {
             System.out.println("Error in spontaneous parking: " + e.getMessage());
             return "Spontaneous parking failed: " + e.getMessage();
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
+
     }
     
     /**
      * Request parking extension during the last hour
      */
     public String requestParkingExtension(String parkingCodeStr) {
+    	Connection conn = DBController.getInstance().getConnection();
+
         try {
             int parkingCode = Integer.parseInt(parkingCodeStr);
             
@@ -834,6 +893,8 @@ public class SmartParkingController {
             return "Invalid parking code format";
         } catch (Exception e) {
             System.out.println("Error requesting extension: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         
         return "Invalid parking code or parking session not found";
@@ -850,7 +911,7 @@ public class SmartParkingController {
             
             return String.format("Smart Parking Status: %d total spots, %d occupied, %d available (%.1f%% available)",
                                totalSpots, occupiedSpots, availableSpots, 
-                               (double) availableSpots / totalSpots * 100);
+                               (double) availableSpots / totalSpots * 10);
                                
         } catch (Exception e) {
             return "Error getting system status: " + e.getMessage();
@@ -951,7 +1012,8 @@ public class SmartParkingController {
         List<Integer> availableSpots = new ArrayList<>();
         
         String spotsQuery = "SELECT ParkingSpot_ID FROM ParkingSpot WHERE isOccupied = false ORDER BY ParkingSpot_ID";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(spotsQuery)) {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -961,6 +1023,8 @@ public class SmartParkingController {
                     }
                 }
             }
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         
         return availableSpots;
@@ -973,7 +1037,8 @@ public class SmartParkingController {
             AND statusEnum = 'active'
             AND NOT (reservation_Date < ? OR reservation_Date > ?)
             """;
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(conflictQuery)) {
             stmt.setInt(1, spotId);
             stmt.setDate(2, Date.valueOf(endTime.toLocalDate()));
@@ -984,6 +1049,8 @@ public class SmartParkingController {
                     return rs.getInt(1) == 0;
                 }
             }
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         
         return false;
@@ -1023,7 +1090,8 @@ public class SmartParkingController {
             (User_ID, parking_ID, reservation_Date, Date_Of_Placing_Order, statusEnum, assigned_parking_spot_id) 
             VALUES (?, ?, ?, NOW(), 'active', ?)
             """;
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(insertQuery, PreparedStatement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, userID);
             stmt.setInt(2, spotId);
@@ -1042,6 +1110,8 @@ public class SmartParkingController {
                                        startTime.format(formatter), endTime.format(formatter));
                 }
             }
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         
         return "Reservation creation failed";
@@ -1056,7 +1126,8 @@ public class SmartParkingController {
             AND reservation_Date >= ? 
             AND reservation_Date <= ?
             """;
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setDate(1, Date.valueOf(startTime.toLocalDate()));
             stmt.setDate(2, Date.valueOf(endTime.toLocalDate()));
@@ -1066,6 +1137,8 @@ public class SmartParkingController {
                     return rs.getInt(1);
                 }
             }
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         
         return 0;
@@ -1073,13 +1146,16 @@ public class SmartParkingController {
     
     private int getCurrentlyOccupiedSpots() throws SQLException {
         String query = "SELECT COUNT(*) FROM ParkingSpot WHERE isOccupied = true";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
                 }
             }
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return 0;
     }
@@ -1091,7 +1167,8 @@ public class SmartParkingController {
     
     private int getUserID(String userName) {
         String qry = "SELECT User_ID FROM users WHERE UserName = ?";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setString(1, userName);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -1101,6 +1178,8 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error getting user ID: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return -1;
     }
@@ -1112,7 +1191,8 @@ public class SmartParkingController {
     
     private int getAvailableParkingSpotID() {
         String qry = "SELECT ParkingSpot_ID FROM ParkingSpot WHERE isOccupied = false LIMIT 1";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -1121,13 +1201,16 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error getting available spot ID: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return -1;
     }
     
     private boolean isParkingSpotAvailable(int spotID) {
         String qry = "SELECT isOccupied FROM ParkingSpot WHERE ParkingSpot_ID = ?";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setInt(1, spotID);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -1137,19 +1220,24 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error checking spot availability: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
         return false;
     }
     
     private void updateParkingSpotStatus(int spotID, boolean isOccupied) {
         String qry = "UPDATE ParkingSpot SET isOccupied = ? WHERE ParkingSpot_ID = ?";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setBoolean(1, isOccupied);
             stmt.setInt(2, spotID);
             stmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println("Error updating parking spot status: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
     }
     
@@ -1159,19 +1247,23 @@ public class SmartParkingController {
     
     private void updateReservationStatus(int reservationCode, String status) {
         String qry = "UPDATE Reservations SET statusEnum = ? WHERE Reservation_code = ?";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setString(1, status);
             stmt.setInt(2, reservationCode);
             stmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println("Error updating reservation status: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
     }
     
     private void sendLateExitNotification(int userID) {
         String qry = "SELECT Email, Phone, Name FROM users WHERE User_ID = ?";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setInt(1, userID);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -1186,12 +1278,15 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error sending late notification: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
     }
     
     private boolean isUsernameAvailable(String userName) {
         String checkQry = "SELECT COUNT(*) FROM users WHERE UserName = ?";
-        
+        Connection conn = DBController.getInstance().getConnection();
+
         try (PreparedStatement stmt = conn.prepareStatement(checkQry)) {
             stmt.setString(1, userName);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -1201,7 +1296,10 @@ public class SmartParkingController {
             }
         } catch (SQLException e) {
             System.out.println("Error checking username availability: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
+
         
         return false;
     }

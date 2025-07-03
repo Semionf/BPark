@@ -45,6 +45,7 @@ public class AttendantController implements Initializable {
 	@FXML
 	private Label lblRegistrationStatus;
 
+
 	@FXML
 	private Button btnLogout;
 
@@ -94,6 +95,12 @@ public class AttendantController implements Initializable {
 	private ComboBox<String> comboAssistAction;
 
 	private ObservableList<ParkingOrder> activeParkings = FXCollections.observableArrayList();
+	
+	public void setUserName(String userName) {
+	    if (lblAttendantInfo != null) {
+	        lblAttendantInfo.setText("Attendant: " + userName);
+	    }
+	}
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {

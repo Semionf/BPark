@@ -102,7 +102,7 @@
 								onAction="#handleRegisterSubscriber" styleClass="primary-button"
 								prefWidth="150" />
 							<Button text="Clear Form"
-								onAction="#clearRegistrationForm" prefWidth="100" />
+								onAction="#clearRegistrationForm" prefWidth="10" />
 						</HBox>
 
 						<Label fx:id="lblRegistrationStatus" />
@@ -131,7 +131,7 @@
 						VBox.vgrow="ALWAYS">
 						<columns>
 							<TableColumn fx:id="colParkingCode"
-								text="Parking Code" prefWidth="100" />
+								text="Parking Code" prefWidth="10" />
 							<TableColumn fx:id="colSubscriberName"
 								text="Subscriber" prefWidth="150" />
 							<TableColumn fx:id="colSpot" text="Spot"

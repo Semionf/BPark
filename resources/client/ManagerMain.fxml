@@ -11,7 +11,7 @@
 	fx:controller="controllers.ManagerController" prefHeight="800.0"
 	prefWidth="1200.0" stylesheets="@../css/ManagerMain.css">
 
-	<!-- Top Bar  -->
+	<!-- Top Bar -->
 	<top>
 		<VBox spacing="10" style="-fx-background-color: #2C3E50;">
 			<padding>
@@ -58,19 +58,19 @@
 						<HBox spacing="20">
 							<VBox spacing="5"
 								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="100">
+								alignment="CENTER" prefWidth="200" prefHeight="10">
 								<padding>
 									<Insets bottom="15.0" left="15.0" right="15.0"
 										top="15.0" />
 								</padding>
 								<Label text="Total Spots" style="-fx-text-fill: #7F8C8D;" />
-								<Label fx:id="lblTotalSpots" text="100"
+								<Label fx:id="lblTotalSpots" text="10"
 									style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #2C3E50;" />
 							</VBox>
 
 							<VBox spacing="5"
 								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="100">
+								alignment="CENTER" prefWidth="200" prefHeight="10">
 								<padding>
 									<Insets bottom="15.0" left="15.0" right="15.0"
 										top="15.0" />
@@ -82,7 +82,7 @@
 
 							<VBox spacing="5"
 								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="100">
+								alignment="CENTER" prefWidth="200" prefHeight="10">
 								<padding>
 									<Insets bottom="15.0" left="15.0" right="15.0"
 										top="15.0" />
@@ -94,7 +94,7 @@
 
 							<VBox spacing="5"
 								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="100">
+								alignment="CENTER" prefWidth="200" prefHeight="10">
 								<padding>
 									<Insets bottom="15.0" left="15.0" right="15.0"
 										top="15.0" />
@@ -228,117 +228,168 @@
 				</ScrollPane>
 			</Tab>
 
-			<!-- Tab 2: Reports -->
-			<Tab text="Reports">
-				<VBox spacing="15">
+
+			<!-- Tab 2: Parking Report -->
+			<Tab text="Parking Report">
+				<VBox spacing="20">
 					<padding>
-						<Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+						<Insets top="20.0" right="20.0" bottom="20.0" left="20.0" />
 					</padding>
 
-					<!-- Report Controls -->
-					<HBox spacing="15" alignment="CENTER_LEFT">
-						<Label text="Report Type:" />
-						<ComboBox fx:id="comboReportType" prefWidth="200" />
-						<Label text="From:" />
-						<DatePicker fx:id="datePickerFrom" prefWidth="150" />
-						<Label text="To:" />
-						<DatePicker fx:id="datePickerTo" prefWidth="150" />
-						<Button text="Generate Report"
-							onAction="#handleGenerateSelectedReport" styleClass="primary-button" />
-					</HBox>
+					<Label text="Parking Time Analysis"
+						style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+					<TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
 
-					<Separator />
+						<Tab text="Total Parking Time Per Day">
+							<VBox>
 
-					<!-- Report Tabs -->
-					<TabPane VBox.vgrow="ALWAYS">
-						<!-- Parking Time Report -->
-						<Tab text="Parking Time Report">
-							<VBox spacing="15">
 								<padding>
-									<Insets bottom="15.0" left="15.0" right="15.0"
-										top="15.0" />
+									<Insets top="15" right="15" bottom="15" left="15" />
 								</padding>
 
-								<GridPane hgap="20" vgap="10">
-									<Label text="Average Parking Duration:"
-										GridPane.columnIndex="0" GridPane.rowIndex="0" />
-									<Label fx:id="lblAvgDuration" text="--"
-										GridPane.columnIndex="1" GridPane.rowIndex="0" />
-
-									<Label text="Total Parkings:" GridPane.columnIndex="0"
-										GridPane.rowIndex="1" />
-									<Label fx:id="lblTotalParkings" text="--"
-										GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-									<Label text="Late Exits:" GridPane.columnIndex="0"
-										GridPane.rowIndex="2" />
-									<Label fx:id="lblLateExits" text="--"
-										GridPane.columnIndex="1" GridPane.rowIndex="2" />
-
-									<Label text="Extensions:" GridPane.columnIndex="0"
-										GridPane.rowIndex="3" />
-									<Label fx:id="lblExtensions" text="--"
-										GridPane.columnIndex="1" GridPane.rowIndex="3" />
-								</GridPane>
-
-								<BarChart fx:id="parkingTimeChart" VBox.vgrow="ALWAYS">
+								<BarChart fx:id="chartTotalParkingTimePerDay"
+									VBox.vgrow="ALWAYS">
 									<xAxis>
-										<CategoryAxis label="Date" />
+										<CategoryAxis label="Day of Month" />
 									</xAxis>
 									<yAxis>
-										<NumberAxis label="Average Duration (minutes)" />
+										<NumberAxis label="Total Duration (hours)" />
+									</yAxis>
+								</BarChart>
+
+								<Label fx:id="lblTotalMonthHours"
+									text="Total Month Hours: --"
+									style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-padding: 5 0 0 15;" />
+
+
+							</VBox>
+						</Tab>
+
+
+						<Tab text="Hourly Parking Distribution">
+							<VBox>
+								<padding>
+									<Insets top="15.0" right="15.0" bottom="15.0"
+										left="15.0" />
+								</padding>
+
+								<BarChart fx:id="chartHourlyDistribution"
+									VBox.vgrow="ALWAYS">
+									<xAxis>
+										<CategoryAxis label="Hour" />
+									</xAxis>
+									<yAxis>
+										<NumberAxis label="Number of Parkings" />
 									</yAxis>
 								</BarChart>
 							</VBox>
 						</Tab>
 
-						<!-- Subscriber Status Report -->
-						<Tab text="Subscriber Status Report">
-							<VBox spacing="15">
+						<Tab text="Parking Extensions Percentage">
+							<VBox spacing="10" alignment="CENTER">
 								<padding>
-									<Insets bottom="15.0" left="15.0" right="15.0"
-										top="15.0" />
+									<Insets top="15" right="15" bottom="15" left="15" />
 								</padding>
 
-								<GridPane hgap="20" vgap="10">
-									<Label text="Active Subscribers:"
-										GridPane.columnIndex="0" GridPane.rowIndex="0" />
-									<Label fx:id="lblActiveSubscribers" text="--"
-										GridPane.columnIndex="1" GridPane.rowIndex="0" />
 
-									<Label text="Total Orders:" GridPane.columnIndex="0"
-										GridPane.rowIndex="1" />
-									<Label fx:id="lblTotalOrders" text="--"
-										GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-									<Label text="Reservations:" GridPane.columnIndex="0"
-										GridPane.rowIndex="2" />
-									<Label fx:id="lblReservationCount" text="--"
-										GridPane.columnIndex="1" GridPane.rowIndex="2" />
-
-									<Label text="Cancelled:" GridPane.columnIndex="0"
-										GridPane.rowIndex="3" />
-									<Label fx:id="lblCancelled" text="--"
-										GridPane.columnIndex="1" GridPane.rowIndex="3" />
-								</GridPane>
-
-								<AreaChart fx:id="subscriberActivityChart"
-									VBox.vgrow="ALWAYS">
-									<xAxis>
-										<CategoryAxis label="Date" />
-									</xAxis>
-									<yAxis>
-										<NumberAxis label="Activity Count" />
-									</yAxis>
-								</AreaChart>
+								<Label
+									text="Percentage of Subscribers Who Extended Their Parking at Least Once"
+									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+								<PieChart fx:id="chartExtensionsPercentage"
+									prefHeight="300" prefWidth="400" />
+								<Label fx:id="lblTotalExtensions"
+									text="Total Extensions: --"
+									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+								<Label fx:id="lblExtensionsPercent"
+									text="Percent Subscribers Who Extended Their Parking: --"
+									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
 							</VBox>
 						</Tab>
-					</TabPane>
 
+						<Tab text="Hourly Late Exit Distribution">
+							<VBox>
+								<padding>
+									<Insets top="15.0" right="15.0" bottom="15.0"
+										left="15.0" />
+								</padding>
+
+								<BarChart fx:id="chartLateExitsByHour"
+									VBox.vgrow="ALWAYS">
+									<xAxis>
+										<CategoryAxis label="Hour" />
+									</xAxis>
+									<yAxis>
+										<NumberAxis label="Number of Late Exits" />
+									</yAxis>
+								</BarChart>
+								<Label fx:id="lblTotalLateExits"
+									text="Total Late Exits: --"
+									style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-padding: 5 0 0 15;" />
+
+							</VBox>
+						</Tab>
+
+						<Tab text="Late Exit Subscriber Percentage">
+							<VBox spacing="10" alignment="CENTER">
+								<padding>
+									<Insets top="15" right="15" bottom="15" left="15" />
+								</padding>
+
+								<Label
+									text="Percentage of Subscribers Who Were Late at Least Once"
+									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+								<PieChart fx:id="chartLateSubscribersRate"
+									prefHeight="300" prefWidth="400" />
+								<Label fx:id="lblLateSubscriberPercent"
+									text="Percent of Late Subscribers: --"
+									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+							</VBox>
+						</Tab>
+
+						<Tab text="Reservation Usage Rate">
+							<VBox spacing="10" alignment="CENTER">
+								<padding>
+									<Insets top="15" right="15" bottom="15" left="15" />
+								</padding>
+
+								<Label text="Percentage of Subscribers use Reservations"
+									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+
+								<PieChart fx:id="chartReservationUsage"
+									prefHeight="300" prefWidth="400" />
+
+								<GridPane hgap="20" vgap="10" alignment="CENTER"
+									style="-fx-padding: 10 0 0 15;">
+									<Label fx:id="lblTotalReservations"
+										text="Total Reservations: --"
+										style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;"
+										GridPane.columnIndex="0" GridPane.rowIndex="0" />
+									<Label fx:id="lblUsedReservations"
+										text="Used Reservations: --"
+										style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;"
+										GridPane.columnIndex="1" GridPane.rowIndex="0" />
+									<Label fx:id="lblPreOrderReservations"
+										text="Open Reservations: --"
+										style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;"
+										GridPane.columnIndex="0" GridPane.rowIndex="1" />
+									<Label fx:id="lblCancelledReservations"
+										text="Cancelled Reservations: --"
+										style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;"
+										GridPane.columnIndex="1" GridPane.rowIndex="1" />
+								</GridPane>
+
+							</VBox>
+						</Tab>
+
+
+					</TabPane>
 				</VBox>
 			</Tab>
 
-			<!-- Tab 3: Active Parkings -->
+
+			<!-- Tab 4: Active Parkings (Inherited) -->
+
+      
 			<Tab text="Active Parkings">
 				<VBox spacing="10">
 					<padding>
@@ -358,7 +409,7 @@
 						VBox.vgrow="ALWAYS">
 						<columns>
 							<TableColumn fx:id="colParkingCode"
-								text="Parking Code" prefWidth="100" />
+								text="Parking Code" prefWidth="10" />
 							<TableColumn fx:id="colSubscriberName"
 								text="Subscriber" prefWidth="150" />
 							<TableColumn fx:id="colSpot" text="Spot"
@@ -366,9 +417,12 @@
 							<TableColumn fx:id="colEntryTime" text="Entry Time"
 								prefWidth="150" />
 							<TableColumn fx:id="colExpectedExit"
-								text="Expected Exit" prefWidth="150" />
-							<TableColumn fx:id="colType" text="Type"
-								prefWidth="100" />
+
+								text="Expected Exit" prefWidth="135" />
+							<TableColumn fx:id="colType" text="Order?"
+								prefWidth="110" />
+
+              
 						</columns>
 					</TableView>
 				</VBox>

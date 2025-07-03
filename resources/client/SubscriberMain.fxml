@@ -48,12 +48,18 @@
          
          <Separator /> 
          
+         <Button text="Home"
+		        onAction="#handleGoHome"
+		        prefWidth="180"
+		        styleClass="menu-button" />
+         
           <Button fx:id="btnShowAvailableSpots"
         		 text="Show Available Spots"
         		 onAction="#handleShowAvailableSpots"
-       			 layoutX="20" layoutY="100"
+       			 layoutX="20" layoutY="10"
         		 prefWidth="200" />
          
+
          <Button fx:id="btnEnterParking" text="Enter Parking Now" 
                  onAction="#handleImmediateParking" 
                  prefWidth="180" styleClass="menu-button" />
@@ -62,7 +68,7 @@
                  onAction="#showExitParkingView" 
                  prefWidth="180" styleClass="menu-button" />
          
-         <Button text="Make Reservation" 
+         <Button text="Reservation" 
                  onAction="#showReservationView" 
                  prefWidth="180" styleClass="menu-button" />
          
@@ -70,11 +76,7 @@
                  onAction="#handleActivateReservation" 
                  prefWidth="180" styleClass="menu-button" />
          
-         <Button text="Cancel Reservation" 
-                 onAction="#handleCancelReservation" 
-                 prefWidth="180" styleClass="menu-button" />
-         
-         <Separator />
+
          
          <Button fx:id="btnViewHistory" text="Parking History" 
                  onAction="#handleViewHistory" 
@@ -99,8 +101,8 @@
    
    <!-- Main Content Area -->
    <center>
-      <ScrollPane fitToWidth="true" fitToHeight="true">
-         <VBox fx:id="mainContent" spacing="20" style="-fx-background-color: #ECF0F1;">
+     <ScrollPane fitToWidth="true" fitToHeight="true">
+    <VBox fx:id="mainContent" spacing="20" style="-fx-background-color: #ECF0F1;">
             <padding>
                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
@@ -114,36 +116,11 @@
                </Label>
                <Label text="Select an action from the menu or use the quick actions below." />
             </VBox>
+
             
-            <!-- Quick Entry Card -->
-            <TitledPane text="Quick Parking Entry" expanded="true">
-               <VBox spacing="10">
-                  <padding>
-                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                  </padding>
-                  
-                  <Label text="Click to enter parking immediately with your subscriber code:" />
-                  <Button text="Enter Parking Now" onAction="#handleImmediateParking" 
-                          prefWidth="200" styleClass="primary-button" />
-                  <Label text="Note: Default parking duration is 4 hours" styleClass="info-label" />
-               </VBox>
-            </TitledPane>
-            
-            <!-- Exit Parking Card -->
-            <TitledPane text="Exit Parking" expanded="false">
-               <VBox spacing="10">
-                  <padding>
-                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                  </padding>
-                  
-                  <HBox spacing="10" alignment="CENTER_LEFT">
-                     <Label text="Parking Code:" />
-                     <TextField fx:id="txtParkingCode" promptText="Enter 6-digit code" prefWidth="150" />
-                     <Button text="Exit" onAction="#handleExitParking" />
-                  </HBox>
-               </VBox>
-            </TitledPane>
-            
+  
+
+
             <!-- Reservation Card -->
             <TitledPane text="Make Reservation" expanded="false">
                <VBox spacing="10">
@@ -175,7 +152,24 @@
                </VBox>
             </TitledPane>
             
-           
+
+            <!-- Parking History Table -->
+            <TitledPane text="Recent Parking History" expanded="false">
+               <VBox spacing="10">
+                  <TableView fx:id="tableParkingHistory" prefHeight="200">
+                     <columns>
+                        <TableColumn fx:id="colDate" text="Date" prefWidth="100" />
+                        <TableColumn fx:id="colEntry" text="Entry Time" prefWidth="100" />
+                        <TableColumn fx:id="colExit" text="Exit Time" prefWidth="100" />
+                        <TableColumn fx:id="colSpot" text="Spot" prefWidth="80" />
+                        <TableColumn fx:id="colStatus" text="Status" prefWidth="100" />
+                     </columns>
+                  </TableView>
+                  
+                  <Button text="Load Full History" onAction="#handleViewHistory" />
+               </VBox>
+            </TitledPane>
+
             
          </VBox>
       </ScrollPane>
