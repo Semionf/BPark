@@ -322,6 +322,8 @@
 								text="Expected Exit" prefWidth="135" />
 							<TableColumn fx:id="colType" text="Order?"
 								prefWidth="110" />
+							<TableColumn fx:id="colCode" text="user Code"
+								prefWidth="110" />
 						</columns>
 					</TableView>
 

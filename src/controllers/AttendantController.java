@@ -26,77 +26,50 @@ import javafx.util.Duration;
 
 /**
  * ||in CLIENT||
- * 
- * Controller class for the parking lot attendant UI. Handles subscriber
- * registration, active parking monitoring, and UI updates.
+ *
+ * Controller class for the Attendant Dashboard in the BPARK client application.
+ * Handles active parking management, subscriber registration, and real-time updates.
+ * Communicates with the server via BParkClientApp messaging.
  */
 public class AttendantController implements Initializable {
 
-	// ====== Registration Fields ======
+    // ====== Registration Fields ======
+    @FXML private TextField txtName;
+    @FXML private TextField txtPhone;
+    @FXML private TextField txtEmail;
+    @FXML private TextField txtCarNumber;
+    @FXML private TextField txtUsername;
+    @FXML private Label lblRegistrationStatus;
+    @FXML private Button btnLogout;
 
-	@FXML
-	private TextField txtName;
-	@FXML
-	private TextField txtPhone;
-	@FXML
-	private TextField txtEmail;
-	@FXML
-	private TextField txtCarNumber;
-	@FXML
-	private TextField txtUsername;
-	@FXML
-	private Label lblRegistrationStatus;
-	@FXML
-	private Button btnLogout;
+    // ====== Active Parking Table ======
+    @FXML private TableView<ParkingOrder> tableActiveParkings;
+    @FXML private TableColumn<ParkingOrder, String> colParkingCode;
+    @FXML private TableColumn<ParkingOrder, String> colSubscriberName;
+    @FXML private TableColumn<ParkingOrder, String> colSpot;
+    @FXML private TableColumn<ParkingOrder, String> colEntryTime;
+    @FXML private TableColumn<ParkingOrder, String> colExpectedExit;
+    @FXML private TableColumn<ParkingOrder, String> colType;
+    @FXML private TableColumn<ParkingOrder, String> colCode;
 
-	// ====== Active Parking Table ======
+    // ====== Subscribers Table ======
+    @FXML private TableView<ParkingSubscriber> tableSubscribers;
+    @FXML private TableColumn<ParkingSubscriber, String> colSubName;
+    @FXML private TableColumn<ParkingSubscriber, String> colSubPhone;
+    @FXML private TableColumn<ParkingSubscriber, String> colSubEmail;
+    @FXML private TableColumn<ParkingSubscriber, String> colSubCar;
+    @FXML private TableColumn<ParkingSubscriber, String> colSubUsername;
 
-	@FXML
-	private TableView<ParkingOrder> tableActiveParkings;
-	@FXML
-	private TableColumn<ParkingOrder, String> colParkingCode;
-	@FXML
-	private TableColumn<ParkingOrder, String> colSubscriberName;
-	@FXML
-	private TableColumn<ParkingOrder, String> colSpot;
-	@FXML
-	private TableColumn<ParkingOrder, String> colEntryTime;
-	@FXML
-	private TableColumn<ParkingOrder, String> colExpectedExit;
-	@FXML
-	private TableColumn<ParkingOrder, String> colType;
-	@FXML
-	private TableColumn<ParkingOrder, String> colCode;
-
-	// ====== Subscribers Table ======
-
-	@FXML
-	private TableView<ParkingSubscriber> tableSubscribers;
-	@FXML
-	private TableColumn<ParkingSubscriber, String> colSubName;
-	@FXML
-	private TableColumn<ParkingSubscriber, String> colSubPhone;
-	@FXML
-	private TableColumn<ParkingSubscriber, String> colSubEmail;
-	@FXML
-	private TableColumn<ParkingSubscriber, String> colSubCar;
-	@FXML
-	private TableColumn<ParkingSubscriber, String> colSubUsername;
-
-	// ====== System Status ======
-
-	@FXML
-	private Label lblParkingStatus;
-	@FXML
-	private Label lblAttendantInfo;
+    // ====== System Status ======
+    @FXML private Label lblParkingStatus;
+    @FXML private Label lblAttendantInfo;
 
 	private ObservableList<ParkingOrder> activeParkings = FXCollections.observableArrayList();
 
-	/**
-	 * Sets the username label for the current attendant.
-	 *
-	 * @param userName The username of the logged-in attendant.
-	 */
+    /**
+     * Sets the logged-in user's name on the dashboard.
+     * @param userName The name of the logged-in attendant.
+     */
 	public void setUserName(String userName) {
 		if (lblAttendantInfo != null) {
 			lblAttendantInfo.setText("Attendant: " + userName);

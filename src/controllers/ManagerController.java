@@ -1,7 +1,6 @@
 package controllers;
 
 import java.net.URL;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -17,6 +16,7 @@ import entities.ParkingSubscriber;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -27,16 +27,21 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.util.Duration;
 
+/**
+ * ||in CLIENT||
+ * 
+ * ManagerController handles the Manager dashboard UI logic and communicates
+ * with the server via the BParkClientApp to request and update parking data. It
+ * manages reports, active parkings, and subscriber data visualization.
+ */
 public class ManagerController implements Initializable {
 
-	// Dashboard Labels
+	// === Dashboard Labels ===
 	@FXML
 	private Label lblTotalSpots;
 	@FXML
@@ -51,11 +56,8 @@ public class ManagerController implements Initializable {
 	private Label lblManagerInfo;
 	@FXML
 	private Label lblLastUpdate;
-	@FXML
-	private Label lbltotalusedreservation;
-	@FXML
-	private Label lblimidiateParkings;
 
+	// === Subscribers Table ===
 	@FXML
 	private TableView<ParkingSubscriber> tableSubscribers;
 	@FXML
@@ -69,6 +71,7 @@ public class ManagerController implements Initializable {
 	@FXML
 	private TableColumn<ParkingSubscriber, String> colSubUsername;
 
+	// === Active Parking Table ===
 	@FXML
 	private TableView<ParkingOrder> tableActiveParkings;
 	@FXML
@@ -83,10 +86,10 @@ public class ManagerController implements Initializable {
 	private TableColumn<ParkingOrder, String> colExpectedExit;
 	@FXML
 	private TableColumn<ParkingOrder, String> colType;
+	@FXML
+	private TableColumn<ParkingOrder, String> colCode;
 
-	private ObservableList<ParkingOrder> activeParkings = FXCollections.observableArrayList();
-
-	// Charts
+	// === Charts ===
 	@FXML
 	private LineChart<String, Number> occupancyChart;
 	@FXML
@@ -96,15 +99,7 @@ public class ManagerController implements Initializable {
 	@FXML
 	private AreaChart<String, Number> subscriberActivityChart;
 
-	// Report Controls
-	@FXML
-	private ComboBox<String> comboReportType;
-	@FXML
-	private DatePicker datePickerFrom;
-	@FXML
-	private DatePicker datePickerTo;
-
-	// --- Parking Report ---
+	// === Parking Report Charts and Labels ===
 	@FXML
 	private BarChart<String, Number> chartTotalParkingTimePerDay;
 	@FXML
@@ -121,13 +116,12 @@ public class ManagerController implements Initializable {
 	private Label lblTotalLateExits;
 	@FXML
 	private Label lblTotalMonthHours;
-
 	@FXML
 	private Label lblExtensionsPercent;
 	@FXML
 	private Label lblLateSubscriberPercent;
 
-	// --- Subscribers Report ---
+	// === Subscribers Report ===
 	@FXML
 	private BarChart<String, Number> chartSubscribersPerDay;
 	@FXML
@@ -141,9 +135,7 @@ public class ManagerController implements Initializable {
 	@FXML
 	private Label lblUsedReservations;
 
-	// Report Labels
-	@FXML
-	private Label lblAvgDuration;
+	// === Report Summary Labels ===
 	@FXML
 	private Label lblTotalParkings;
 	@FXML
@@ -159,27 +151,15 @@ public class ManagerController implements Initializable {
 	@FXML
 	private Label lblCancelled;
 
-	// System Management
-	@FXML
-	private Label lblAutoCancelStatus;
-	@FXML
-	private ComboBox<String> comboMonth;
-	@FXML
-	private ComboBox<String> comboYear;
-	@FXML
-	private Label lblTotalUsers;
-	@FXML
-	private Label lblPeakHours;
-	@FXML
-	private Label lblAvgDailyUsage;
-
-	// Attendant Controller (if using include)
-	@FXML
-	private AttendantController attendantController;
-
 	private Timeline refreshTimeline;
 	private ObservableList<ParkingReport> currentReports = FXCollections.observableArrayList();
 
+	/**
+	 * Initializes the Manager dashboard with UI setup and data loading.
+	 * 
+	 * @param location  Not used
+	 * @param resources Not used
+	 */
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		BParkClientApp.setManagerController(this);
@@ -190,37 +170,11 @@ public class ManagerController implements Initializable {
 
 	}
 
+	/**
+	 * Sets up the initial UI elements such as table column bindings and labels.
+	 */
 	private void setupUI() {
 		setupTableColumns();
-
-		// Initialize report types
-		if (comboReportType != null) {
-			comboReportType.getItems().addAll("Parking Time Report", "Subscriber Status Report", "All Reports");
-			comboReportType.setValue("All Reports");
-		}
-
-		// Initialize month/year combos for monthly reports
-		if (comboMonth != null && comboYear != null) {
-			comboMonth.getItems().addAll("January", "February", "March", "April", "May", "June", "July", "August",
-					"September", "October", "November", "December");
-
-			int currentYear = LocalDate.now().getYear();
-			for (int year = currentYear - 2; year <= currentYear; year++) {
-				comboYear.getItems().add(String.valueOf(year));
-			}
-
-			comboMonth.setValue(LocalDate.now().getMonth().toString());
-			comboYear.setValue(String.valueOf(currentYear));
-		}
-
-		// Set date picker defaults
-		if (datePickerFrom != null && datePickerTo != null) {
-			datePickerTo.setValue(LocalDate.now());
-			datePickerFrom.setValue(LocalDate.now().minusDays(30));
-		}
-
-		// Initialize charts
-		initializeCharts();
 
 		// Set manager info
 		if (lblManagerInfo != null) {
@@ -242,29 +196,9 @@ public class ManagerController implements Initializable {
 
 	}
 
-	private void initializeCharts() {
-		// Initialize occupancy chart with sample data
-		if (occupancyChart != null) {
-			XYChart.Series<String, Number> series = new XYChart.Series<>();
-			series.setName("Occupancy");
-
-			// Add hourly data points
-			for (int hour = 6; hour <= 22; hour++) {
-				series.getData().add(new XYChart.Data<>(hour + ":00", 0));
-			}
-
-			occupancyChart.getData().add(series);
-			occupancyChart.setCreateSymbols(false);
-		}
-
-		// Initialize parking types pie chart
-		if (parkingTypesChart != null) {
-			ObservableList<PieChart.Data> pieChartData = FXCollections
-					.observableArrayList(new PieChart.Data("Immediate", 60), new PieChart.Data("Reserved", 40));
-			parkingTypesChart.setData(pieChartData);
-		}
-	}
-
+	/**
+	 * Loads initial parking and report data from the server.
+	 */
 	private void loadInitialData() {
 		// Load parking availability
 		checkParkingStatus();
@@ -276,6 +210,9 @@ public class ManagerController implements Initializable {
 		updateLastRefreshTime();
 	}
 
+	/**
+	 * Starts the auto-refresh mechanism that periodically updates the dashboard.
+	 */
 	private void startAutoRefresh() {
 		// Refresh dashboard every 30 seconds
 		refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(30), event -> {
@@ -288,46 +225,26 @@ public class ManagerController implements Initializable {
 
 	// ===== Action Handlers =====
 
+	/**
+	 * Requests and loads all available reports from the server.
+	 */
 	@FXML
 	private void handleGenerateReports() {
 		loadReports("ALL");
 	}
 
-	@FXML
-	private void handleGenerateSelectedReport() {
-		String reportType = comboReportType.getValue();
-		LocalDate fromDate = datePickerFrom.getValue();
-		LocalDate toDate = datePickerTo.getValue();
-
-		if (reportType == null) {
-			showAlert("Error", "Please select a report type");
-			return;
-		}
-
-		String type = reportType.contains("Time") ? "PARKING_TIME"
-				: reportType.contains("Subscriber") ? "SUBSCRIBER_STATUS" : "ALL";
-
-		loadReports(type);
-	}
-
+	/**
+	 * Sends a request to generate monthly reports.
+	 */
 	@FXML
 	private void handleGenerateMonthlyReports() {
-		String month = comboMonth.getValue();
-		String year = comboYear.getValue();
-
-		if (month == null || year == null) {
-			showAlert("Error", "Please select month and year");
-			return;
-		}
-
-		// Convert month name to number
-		int monthNum = comboMonth.getSelectionModel().getSelectedIndex() + 1;
-		String monthYear = String.format("%s-%02d", year, monthNum);
-
-		Message msg = new Message(MessageType.GENERATE_MONTHLY_REPORTS, monthYear);
+		Message msg = new Message(MessageType.GENERATE_MONTHLY_REPORTS, 10);
 		BParkClientApp.sendMessage(msg);
 	}
 
+	/**
+	 * Sends a message to check parking availability and load active parkings.
+	 */
 	@FXML
 	private void checkParkingStatus() {
 //		Message msg = new Message(MessageType.CHECK_PARKING_AVAILABILITY, null);
@@ -338,6 +255,11 @@ public class ManagerController implements Initializable {
 		BParkClientApp.sendMessage(activeMsg);
 	}
 
+	/**
+	 * Sends a request to load specific type of reports.
+	 * 
+	 * @param type The report type to load (e.g., ALL)
+	 */
 	private void loadReports(String type) {
 		Message msg = new Message(MessageType.MANAGER_GET_REPORTS, type);
 		BParkClientApp.sendMessage(msg);
@@ -345,36 +267,11 @@ public class ManagerController implements Initializable {
 
 	// ===== UI Update Methods =====
 
-	public void updateParkingStatus(int availableSpots) {
-		Platform.runLater(() -> {
-			int occupied = 10 - availableSpots;
-
-			if (lblOccupied != null) {
-				lblOccupied.setText(String.valueOf(occupied));
-			}
-
-			if (lblAvailable != null) {
-				lblAvailable.setText(String.valueOf(availableSpots));
-			}
-
-			// Update system status based on availability
-			if (lblSystemStatus != null) {
-				if (availableSpots < 10) {
-					lblSystemStatus.setText("System Status: Nearly Full");
-					lblSystemStatus.setStyle("-fx-text-fill: #E74C3C;");
-				} else if (availableSpots < 40) {
-					lblSystemStatus.setText("System Status: Limited Availability");
-					lblSystemStatus.setStyle("-fx-text-fill: #F39C12;");
-				} else {
-					lblSystemStatus.setText("System Status: Operational");
-					lblSystemStatus.setStyle("-fx-text-fill: #27AE60;");
-				}
-			}
-
-			updateOccupancyChart(occupied);
-		});
-	}
-
+	/**
+	 * Updates the dashboard with the latest report data.
+	 * 
+	 * @param reports List of ParkingReport objects
+	 */
 	public void updateReports(ArrayList<ParkingReport> reports) {
 		Platform.runLater(() -> {
 			currentReports.clear();
@@ -383,13 +280,16 @@ public class ManagerController implements Initializable {
 			for (ParkingReport report : reports) {
 				if (report.getReportType().equals("PARKING_TIME")) {
 					updateParkingTimeReport(report);
-				} else if (report.getReportType().equals("SUBSCRIBER_STATUS")) {
-					updateSubscriberStatusReport(report);
 				}
 			}
 		});
 	}
 
+	/**
+	 * Updates UI components with parking time report details.
+	 * 
+	 * @param report ParkingReport object
+	 */
 	private void updateParkingTimeReport(ParkingReport report) {
 
 		lblTotalSpots.setText("10");
@@ -397,9 +297,6 @@ public class ManagerController implements Initializable {
 		lblAvailable.setText(10 - report.getOccupied() + "");
 		lblReservations.setText(report.getpreOrderReservations() + "");
 
-		if (lblAvgDuration != null) {
-			lblAvgDuration.setText(report.getFormattedAverageParkingTime());
-		}
 		if (lblTotalParkings != null) {
 			lblTotalParkings.setText(String.valueOf(report.getTotalParkings()));
 		}
@@ -437,111 +334,11 @@ public class ManagerController implements Initializable {
 		updateChartReservationUsage(report.getpreOrderReservations(), report.getUsedReservations(),
 				report.getCancelledReservations());
 
-		// Update parking time chart
-		updateParkingTimeChart(report);
 	}
 
-	private void updateSubscriberStatusReport(ParkingReport report) {
-		if (lblActiveSubscribers != null) {
-			lblActiveSubscribers.setText(String.valueOf(report.getActiveSubscribers()));
-		}
-		if (lblTotalOrders != null) {
-			lblTotalOrders.setText(String.valueOf(report.getTotalOrders()));
-		}
-		if (lblReservationCount != null) {
-			lblReservationCount
-					.setText(String.format("%d (%.1f%%)", report.getReservations(), report.getReservationPercentage()));
-		}
-		if (lblCancelled != null) {
-			lblCancelled.setText(String.valueOf(report.getCancelledReservations()));
-		}
-
-		// Update subscriber activity chart
-		updateSubscriberActivityChart(report);
-	}
-
-	public void updateActiveParkings(ArrayList<ParkingOrder> activeParkings) {
-		Platform.runLater(() -> {
-			// Count reservations
-			long reservationCount = activeParkings.stream().filter(p -> "ordered".equals(p.getOrderType())).count();
-
-			if (lblReservations != null) {
-				lblReservations.setText(String.valueOf(reservationCount));
-			}
-
-			// Update parking types pie chart
-			updateParkingTypesChart(activeParkings);
-
-			// Calculate peak hours
-			calculatePeakHours(activeParkings);
-		});
-	}
-
-	private void updateOccupancyChart(int currentOccupancy) {
-		if (occupancyChart != null && !occupancyChart.getData().isEmpty()) {
-			XYChart.Series<String, Number> series = occupancyChart.getData().get(0);
-
-			// Update current hour's data
-			LocalDateTime now = LocalDateTime.now();
-			String hourLabel = now.getHour() + ":00";
-
-			// Find and update the data point
-			for (XYChart.Data<String, Number> data : series.getData()) {
-				if (data.getXValue().equals(hourLabel)) {
-					data.setYValue(currentOccupancy);
-					break;
-				}
-			}
-		}
-	}
-
-	private void updateParkingTimeChart(ParkingReport report) {
-		if (parkingTimeChart != null) {
-			parkingTimeChart.getData().clear();
-
-			XYChart.Series<String, Number> series = new XYChart.Series<>();
-			series.setName("Average Duration");
-
-			// Add sample data (would be populated from actual report data)
-			series.getData().add(new XYChart.Data<>("Today", report.getAverageParkingTime()));
-
-			parkingTimeChart.getData().add(series);
-		}
-	}
-
-	private void updateSubscriberActivityChart(ParkingReport report) {
-		if (subscriberActivityChart != null) {
-			subscriberActivityChart.getData().clear();
-
-			XYChart.Series<String, Number> series = new XYChart.Series<>();
-			series.setName("Daily Activity");
-
-			// Add sample data
-			series.getData().add(new XYChart.Data<>("Today", report.getTotalOrders()));
-
-			subscriberActivityChart.getData().add(series);
-		}
-	}
-
-	private void updateParkingTypesChart(ArrayList<ParkingOrder> activeParkings) {
-		if (parkingTypesChart != null) {
-			long immediate = activeParkings.stream().filter(p -> "not ordered".equals(p.getOrderType())).count();
-			long reserved = activeParkings.stream().filter(p -> "ordered".equals(p.getOrderType())).count();
-
-			ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
-					new PieChart.Data("Immediate", immediate), new PieChart.Data("Reserved", reserved));
-			parkingTypesChart.setData(pieChartData);
-		}
-	}
-
-	private void calculatePeakHours(ArrayList<ParkingOrder> parkings) {
-		// Simple peak hour calculation
-		// In real implementation, would analyze entry times
-		if (lblPeakHours != null) {
-			lblPeakHours.setText("9:00-11:00, 14:00-16:00");
-		}
-	}
-
+	/**
+	 * Updates the label showing the last data refresh time.
+	 */
 	private void updateLastRefreshTime() {
 		if (lblLastUpdate != null) {
 			String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
@@ -551,34 +348,41 @@ public class ManagerController implements Initializable {
 
 	// ===== Utility Methods =====
 
+	/**
+	 * Shows an informational alert popup.
+	 * 
+	 * @param title   Title of the alert
+	 * @param content Content of the alert
+	 */
 	private void showAlert(String title, String content) {
 		Alert alert = new Alert(Alert.AlertType.INFORMATION);
 		alert.setTitle(title);
 		alert.setHeaderText(null);
 		alert.setContentText(content);
-		alert.showAndWait();
+
 	}
 
-	private void showError(String title, String content) {
-		Alert alert = new Alert(Alert.AlertType.ERROR);
-		alert.setTitle(title);
-		alert.setHeaderText(null);
-		alert.setContentText(content);
-		alert.showAndWait();
-	}
-
+	/**
+	 * Disconnects the manager and exits the application.
+	 */
 	@FXML
 	private void handleLogout() {
 		BParkClientApp.disconnect();
 		System.exit(0);
 	}
 
+	/**
+	 * Sends a request to fetch the active parkings.
+	 */
 	@FXML
 	private void loadActiveParkings() {
 		Message msg = new Message(MessageType.GET_ACTIVE_PARKINGS, null);
 		BParkClientApp.sendMessage(msg);
 	}
 
+	/**
+	 * Handles the action to show selected subscriber details.
+	 */
 	@FXML
 	private void handleViewSubscriberDetails() {
 		ParkingOrder selectedOrder = tableActiveParkings.getSelectionModel().getSelectedItem();
@@ -591,6 +395,11 @@ public class ManagerController implements Initializable {
 		}
 	}
 
+	/**
+	 * Displays subscriber details in a dialog.
+	 * 
+	 * @param parkingSubscriber ParkingSubscriber object
+	 */
 	public void showSubscriberDetails(ParkingSubscriber parkingSubscriber) {
 		Platform.runLater(() -> {
 			Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -607,12 +416,20 @@ public class ManagerController implements Initializable {
 		});
 	}
 
+	/**
+	 * Updates the active parkings table.
+	 * 
+	 * @param parkings List of ParkingOrder objects
+	 */
 	public void updateActiveParkings(ObservableList<ParkingOrder> parkings) {
 		Platform.runLater(() -> {
 			tableActiveParkings.setItems(parkings);
 		});
 	}
 
+	/**
+	 * Sets up table column bindings for ParkingOrder data.
+	 */
 	private void setupTableColumns() {
 		colParkingCode.setCellValueFactory(
 				cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getParkingCode()));
@@ -631,14 +448,23 @@ public class ManagerController implements Initializable {
 
 		colType.setCellValueFactory(
 				cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getOrderType()));
+		colCode.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getParkingCode()));
 	}
 
+	/**
+	 * Requests the list of all subscribers.
+	 */
 	@FXML
 	private void loadSubscribers() {
 		Message msg = new Message(MessageType.GET_ALL_SUBSCRIBERS, null);
 		BParkClientApp.sendMessage(msg);
 	}
 
+	/**
+	 * Updates the subscribers table.
+	 * 
+	 * @param subscribers List of ParkingSubscriber
+	 */
 	public void updateSubscriberTable(java.util.List<ParkingSubscriber> subscribers) {
 		Platform.runLater(() -> {
 			ObservableList<ParkingSubscriber> list = FXCollections.observableArrayList(subscribers);
@@ -650,6 +476,11 @@ public class ManagerController implements Initializable {
 	// Parking Report
 	// =======================
 
+	/**
+	 * Updates bar chart of total parking time per day.
+	 * 
+	 * @param data Map of day to total hours
+	 */
 	private void updateChartTotalParkingTimePerDay(java.util.Map<String, Integer> data) {
 		Platform.runLater(() -> {
 			chartTotalParkingTimePerDay.getData().clear();
@@ -662,6 +493,11 @@ public class ManagerController implements Initializable {
 		});
 	}
 
+	/**
+	 * Updates hourly distribution bar chart.
+	 * 
+	 * @param data Map of hour to count
+	 */
 	private void updateChartHourlyDistribution(java.util.Map<String, Integer> data) {
 		Platform.runLater(() -> {
 			chartHourlyDistribution.getData().clear();
@@ -674,6 +510,13 @@ public class ManagerController implements Initializable {
 		});
 	}
 
+	/**
+	 * Updates extension percentage pie chart and label.
+	 * 
+	 * @param extensions       Number of extensions
+	 * @param noExtensions     Number of non-extended parkings
+	 * @param totalSubscribers Total subscribers
+	 */
 	private void updateChartExtensionsPercentage(int extensions, int noExtensions, int totalSubscribers) {
 		Platform.runLater(() -> {
 			ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
@@ -688,6 +531,11 @@ public class ManagerController implements Initializable {
 		});
 	}
 
+	/**
+	 * Updates late exits by hour bar chart.
+	 * 
+	 * @param data Map of hour to late exits count
+	 */
 	private void updateChartLateExitsByHour(java.util.Map<String, Integer> data) {
 		Platform.runLater(() -> {
 			chartLateExitsByHour.getData().clear();
@@ -700,6 +548,12 @@ public class ManagerController implements Initializable {
 		});
 	}
 
+	/**
+	 * Updates pie chart and label for late subscriber rate.
+	 * 
+	 * @param lateSubscribers  Number of late subscribers
+	 * @param totalSubscribers Total subscribers
+	 */
 	private void updateChartLateSubscribersRate(int lateSubscribers, int totalSubscribers) {
 		Platform.runLater(() -> {
 			int onTime = totalSubscribers - lateSubscribers;
@@ -711,6 +565,13 @@ public class ManagerController implements Initializable {
 		});
 	}
 
+	/**
+	 * Updates reservation usage pie chart and associated labels.
+	 * 
+	 * @param preOrderReservations Number of open reservations
+	 * @param used                 Number of used reservations
+	 * @param cancelled            Number of cancelled reservations
+	 */
 	private void updateChartReservationUsage(int preOrderReservations, int used, int cancelled) {
 		Platform.runLater(() -> {
 			ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
