@@ -3,176 +3,250 @@ package entities;
 import java.io.Serializable;
 
 /**
- * This class represents a message between the server and the client for the
- * ParkB system. It contains the type of the message and its content.
+ * Represents a message used for communication between the client and server in
+ * the ParkB parking system. Each message consists of a type and content.
+ * 
+ * The message type defines the kind of operation requested or responded to, and
+ * the content holds the actual data, such as objects, strings, or other
+ * serializable data used in the operation.
  * 
  * @author ParkB Team
  * @version 1.0
  */
+
 public class Message implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	// Class variables *************************************************
+	// ***************************Class variables ***************************
 
 	/**
-	 * The message type for parking system operations
+	 * The type of the message indicating the operation to perform or that was
+	 * performed.
 	 */
 	private MessageType type;
 
 	/**
-	 * The content of the message, such as ParkingOrder objects, subscriber codes,
-	 * etc.
+	 * The content of the message. This can include data like subscriber info,
+	 * parking orders, response messages, etc.
 	 */
 	private Serializable content;
 
 	/**
-	 * The message type enumeration for parking system operations.
+	 * Enum representing all supported message types in the ParkB parking system.
 	 */
 	public enum MessageType {
-		// General operations
 		/** Register new subscriber request */
 		REGISTER_SUBSCRIBER,
 		/** Registration response */
 		REGISTRATION_RESPONSE,
-		/** Generate unique username request */
+		/**
+		 * Generate unique username request
+		 */
 		GENERATE_USERNAME,
-		/** Generated username response */
+		/**
+		 * Generated username response
+		 */
 		USERNAME_RESPONSE,
-		/** Subscriber login request */
+
+		/**
+		 * Subscriber login request
+		 */
 		SUBSCRIBER_LOGIN,
-		/** Subscriber login response */
+		/**
+		 * Subscriber login response
+		 */
 		SUBSCRIBER_LOGIN_RESPONSE,
-
-		// Parking operations
-		/** Check parking availability */
+		/**
+		 * Check parking availability
+		 */
 		CHECK_PARKING_AVAILABILITY,
-		/** Parking availability response */
+		/**
+		 * Parking availability response
+		 */
 		PARKING_AVAILABILITY_RESPONSE,
-		/** Reserve parking spot */
+		/**
+		 * Reserve parking spot
+		 */
 		RESERVE_PARKING,
-		/** Reservation response */
+		/**
+		 * Reservation response
+		 */
 		RESERVATION_RESPONSE,
-		/** Enter parking request */
+		/**
+		 * Enter parking request
+		 */
 		ENTER_PARKING,
-		/** Enter parking response */
+		/**
+		 * Enter parking response
+		 */
 		ENTER_PARKING_RESPONSE,
-		/** Exit parking request */
+		/**
+		 * Exit parking request
+		 */
 		EXIT_PARKING,
-		/** Exit parking response */
+		/**
+		 * Exit parking response
+		 */
 		EXIT_PARKING_RESPONSE,
-		/** Extend parking time */
+		/**
+		 * Extend parking time
+		 */
 		EXTEND_PARKING,
-		/** Extend parking response */
+		/**
+		 * Extend parking response
+		 */
 		EXTEND_PARKING_RESPONSE,
-		/** Request lost parking code */
+		/**
+		 * Request lost parking code
+		 */
 		REQUEST_LOST_CODE,
-		/** Lost code response */
+		/**
+		 * Lost code response
+		 */
 		LOST_CODE_RESPONSE,
-		/** Get parking history */
+		/**
+		 * Get parking history
+		 */
 		GET_PARKING_HISTORY,
-		/** Parking history response */
+		/**
+		 * Parking history response
+		 */
 		PARKING_HISTORY_RESPONSE,
-
-		// Manager operations
-		/** Manager login request */
+		/**
+		 * Manager login request
+		 */
 		MANAGER_LOGIN,
-		/** Manager login response */
+		/**
+		 * Manager login response
+		 */
 		MANAGER_LOGIN_RESPONSE,
-		/** Get active parkings (for attendant) */
+		/**
+		 * Get active parkings (for attendant)
+		 */
 		GET_ACTIVE_PARKINGS,
-		/** Active parkings response */
+		/**
+		 * Active parkings response
+		 */
 		ACTIVE_PARKINGS_RESPONSE,
-		/** Manager get reports request */
+		/**
+		 * Manager get reports request
+		 */
 		MANAGER_GET_REPORTS,
-		/** Manager send reports response */
+		/**
+		 * Manager send reports response
+		 */
 		MANAGER_SEND_REPORTS,
-		/** Update subscriber information */
+		/**
+		 * Update subscriber information
+		 */
 		UPDATE_SUBSCRIBER_INFO,
-		/** Update subscriber response */
+		/**
+		 * Update subscriber response
+		 */
 		UPDATE_SUBSCRIBER_RESPONSE,
-		/** Generate monthly reports */
+		/**
+		 * Generate monthly reports
+		 */
 		GENERATE_MONTHLY_REPORTS,
-		/** Monthly reports response */
+		/**
+		 * Monthly reports response
+		 */
 		MONTHLY_REPORTS_RESPONSE,
 
-		// Reservations
-		/** Get available time slots for a date/time (15-minute precision) */
+		/**
+		 * Get available time slots for a date/time (15-minute precision)
+		 */
 		GET_TIME_SLOTS,
-		/** Time slots response */
+		/**
+		 * Time slots response
+		 */
 		TIME_SLOTS_RESPONSE,
-		/** Make pre-booking reservation (DATETIME format) */
+		/**
+		 * Make pre-booking reservation (DATETIME format)
+		 */
 		MAKE_PREBOOKING,
-		/** Pre-booking response */
+		/**
+		 * Pre-booking response
+		 */
 		PREBOOKING_RESPONSE,
-		/** Spontaneous parking entry (immediate spot assignment) */
+		/**
+		 * Spontaneous parking entry (immediate spot assignment)
+		 */
 		SPONTANEOUS_PARKING,
-		/** Spontaneous parking response */
+		/**
+		 * Spontaneous parking response
+		 */
 		SPONTANEOUS_RESPONSE,
-		/** Request parking extension (during last hour) */
+		/**
+		 * Request parking extension (during last hour)
+		 */
 		REQUEST_EXTENSION,
-		/** Extension response */
+		/**
+		 * Extension response
+		 */
 		EXTENSION_RESPONSE,
-		/** Get system status */
+		/**
+		 * Get system status
+		 */
 		GET_SYSTEM_STATUS,
-		/** System status response */
+		/**
+		 * System status response
+		 */
 		SYSTEM_STATUS_RESPONSE,
 
-		// Activation & cancellation
-		/** Activate reservation when arriving */
+		/**
+		 * Activate reservation when arriving
+		 */
 		ACTIVATE_RESERVATION,
-		/** Activation response */
+		/**
+		 * Activation response
+		 */
 		ACTIVATION_RESPONSE,
-		/** Cancel reservation */
+		/**
+		 * Cancel reservation
+		 */
 		CANCEL_RESERVATION,
-		/** Cancellation response */
+		/**
+		 * Cancellation response
+		 */
 		CANCELLATION_RESPONSE,
 
-		// Kiosk-specific operations
-		/** Kiosk login response */
-		KIOSK_LOGIN_RESPONSE,
-		/** Kiosk RF Login */
-		KIOSK_RF_LOGIN,
-		/** Kiosk ID Login */
-		KIOSK_ID_LOGIN,
-		/** Kiosk enter parking request */
-		ENTER_PARKING_KIOSK,
-		/** Kiosk enter parking response */
-		ENTER_PARKING_KIOSK_RESPONSE,
-		/** Kiosk retrieve car request */
-		RETRIEVE_CAR_KIOSK,
-		/** Kiosk retrieve car response */
-		RETRIEVE_CAR_KIOSK_RESPONSE,
-		/** Kiosk forgot code request */
-		FORGOT_CODE_KIOSK,
-		/** Kiosk forgot code response */
-		FORGOT_CODE_KIOSK_RESPONSE,
-		/** Kiosk requests to activate a pre-booked reservation if valid */
-		ACTIVATE_RESERVATION_KIOSK,
-		/** Server responds to kiosk reservation activation request */
-		ACTIVATE_RESERVATION_KIOSK_RESPONSE,
-
-		// Additional subscriber operations
-		/** Get subscriber by name */
+		/** Request subscriber by name */
 		GET_SUBSCRIBER_BY_NAME,
-		/** Get all subscribers */
+		/** Request all subscribers */
 		GET_ALL_SUBSCRIBERS,
-		/** Show all subscribers in a table */
+		/** Show all subscribers in the system */
 		SHOW_ALL_SUBSCRIBERS,
-		/** Show detailed subscriber profile */
+		/** Show details of a specific subscriber */
 		SHOW_SUBSCRIBER_DETAILS,
-		/** Request subscriber data (for profile update) */
+		/** Request subscriber data */
 		REQUEST_SUBSCRIBER_DATA,
-		/** Subscriber data response */
-		SUBSCRIBER_DATA_RESPONSE
+		/** Response with subscriber data */
+		SUBSCRIBER_DATA_RESPONSE,
+
+		/**
+		 * Sent by the client to request the latest dashboard statistics. Expected to be
+		 * handled by the server, which queries the database and returns a summarized
+		 * view of parking data.
+		 */
+		DASHBOARD_DATA_REQUEST,
+
+		/**
+		 * Sent by the server in response to DASHBOARD_DATA_REQUEST. Contains a
+		 * DashboardData object with aggregated statistics such as total spots,
+		 * occupied, available, reservations, etc.
+		 */
+		DASHBOARD_DATA_RESPONSE,
+
 	}
 
-	// Constructors ******************************************************
-
+	// ****************************Constructors **************************
+	
 	/**
-	 * Constructs a new Message with the specified type and content.
-	 * 
-	 * @param type    the type of the message
-	 * @param content the content of the message
+	 * Constructs a new Message instance with a specific type and content.
+	 *
+	 * @param type    the type of the message (operation identifier)
+	 * @param content the content of the message, must implement {@link Serializable}
 	 */
 	public Message(MessageType type, Serializable content) {
 		this.setType(type);
