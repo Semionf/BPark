@@ -55,84 +55,85 @@
 						</padding>
 
 						<!-- Key Metrics -->
-						<HBox spacing="20">
-							<VBox spacing="5"
-								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="10">
-								<padding>
-									<Insets bottom="15.0" left="15.0" right="15.0"
-										top="15.0" />
-								</padding>
-								<Label text="Total Spots" style="-fx-text-fill: #7F8C8D;" />
-								<Label fx:id="lblTotalSpots" text="10"
-									style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #2C3E50;" />
-							</VBox>
+						<StackPane alignment="CENTER">
+							<GridPane hgap="30" vgap="30" alignment="CENTER">
+								<columnConstraints>
+									<ColumnConstraints halignment="CENTER" />
+									<ColumnConstraints halignment="CENTER" />
+								</columnConstraints>
+								<rowConstraints>
+									<RowConstraints valignment="CENTER" />
+									<RowConstraints valignment="CENTER" />
+								</rowConstraints>
 
-							<VBox spacing="5"
-								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="10">
-								<padding>
-									<Insets bottom="15.0" left="15.0" right="15.0"
-										top="15.0" />
-								</padding>
-								<Label text="Occupied" style="-fx-text-fill: #7F8C8D;" />
-								<Label fx:id="lblOccupied" text="--"
-									style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #E74C3C;" />
-							</VBox>
+								<!-- Total Spots -->
+								<VBox GridPane.rowIndex="0" GridPane.columnIndex="0"
+									spacing="10"
+									style="-fx-background-color: white; -fx-background-radius: 10; 
+                                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
+									alignment="CENTER" prefWidth="250" prefHeight="130">
+									<padding>
+										<Insets bottom="15.0" left="15.0" right="15.0"
+											top="15.0" />
+									</padding>
+									<Label text="Total Spots" style="-fx-text-fill: #7F8C8D;" />
+									<Label fx:id="lblTotalSpots" text="--"
+										style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #2C3E50;" />
+								</VBox>
 
-							<VBox spacing="5"
-								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="10">
-								<padding>
-									<Insets bottom="15.0" left="15.0" right="15.0"
-										top="15.0" />
-								</padding>
-								<Label text="Available" style="-fx-text-fill: #7F8C8D;" />
-								<Label fx:id="lblAvailable" text="--"
-									style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #27AE60;" />
-							</VBox>
+								<!-- Occupied -->
+								<VBox GridPane.rowIndex="0" GridPane.columnIndex="1"
+									spacing="10"
+									style="-fx-background-color: white; -fx-background-radius: 10; 
+                                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
+									alignment="CENTER" prefWidth="250" prefHeight="130">
+									<padding>
+										<Insets bottom="15.0" left="15.0" right="15.0"
+											top="15.0" />
+									</padding>
+									<Label text="Occupied" style="-fx-text-fill: #7F8C8D;" />
+									<Label fx:id="lblOccupied" text="--"
+										style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #E74C3C;" />
+								</VBox>
 
-							<VBox spacing="5"
-								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="10">
-								<padding>
-									<Insets bottom="15.0" left="15.0" right="15.0"
-										top="15.0" />
-								</padding>
-								<Label text="Active Reservations"
-									style="-fx-text-fill: #7F8C8D;" />
-								<Label fx:id="lblReservations" text="--"
-									style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #3498DB;" />
-							</VBox>
-						</HBox>
+								<!-- Available -->
+								<VBox GridPane.rowIndex="1" GridPane.columnIndex="0"
+									spacing="10"
+									style="-fx-background-color: white; -fx-background-radius: 10; 
+                                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
+									alignment="CENTER" prefWidth="250" prefHeight="130">
+									<padding>
+										<Insets bottom="15.0" left="15.0" right="15.0"
+											top="15.0" />
+									</padding>
+									<Label text="Available" style="-fx-text-fill: #7F8C8D;" />
+									<Label fx:id="lblAvailable" text="--"
+										style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #27AE60;" />
+								</VBox>
 
-						<!-- Charts Section -->
-						<HBox spacing="20">
+								<!-- Active Reservations -->
+								<VBox GridPane.rowIndex="1" GridPane.columnIndex="1"
+									spacing="10"
+									style="-fx-background-color: white; -fx-background-radius: 10; 
+                                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
+									alignment="CENTER" prefWidth="250" prefHeight="130">
+									<padding>
+										<Insets bottom="15.0" left="15.0" right="15.0"
+											top="15.0" />
+									</padding>
+									<Label text="Active Reservations"
+										style="-fx-text-fill: #7F8C8D;" />
+									<Label fx:id="lblReservations" text="--"
+										style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #3498DB;" />
+								</VBox>
 
-							<!-- Parking Types Pie Chart -->
-							<VBox spacing="10" alignment="CENTER">
-								<padding>
-									<Insets top="15" right="15" bottom="15" left="15" />
-								</padding>
-
-
-								<Label
-									text="Parking Statistics: Immediate and Reserved Parkings"
-									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
-								<PieChart fx:id="chartExtensionsPercentage"
-									prefHeight="300" prefWidth="400" />
-								<Label fx:id="lblTotalExtensions"
-									text="Total Extensions: --"
-									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
-								<Label fx:id="lblExtensionsPercent"
-									text="Percent Subscribers Who Extended Their Parking: --"
-									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
-							</VBox>
-						</HBox>
+							</GridPane>
+						</StackPane>
 
 					</VBox>
 				</ScrollPane>
 			</Tab>
+
 
 
 			<!-- Tab 2: Parking Report -->

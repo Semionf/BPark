@@ -217,6 +217,7 @@ public class ManagerController implements Initializable {
 		// Refresh dashboard every 30 seconds
 		refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(30), event -> {
 			checkParkingStatus();
+			loadReports("ALL");
 			updateLastRefreshTime();
 		}));
 		refreshTimeline.setCycleCount(Timeline.INDEFINITE);
@@ -292,9 +293,9 @@ public class ManagerController implements Initializable {
 	 */
 	private void updateParkingTimeReport(ParkingReport report) {
 
-		lblTotalSpots.setText("10");
+		lblTotalSpots.setText(report.getTotalSpots() + "");
 		lblOccupied.setText(report.getOccupied() + "");
-		lblAvailable.setText(10 - report.getOccupied() + "");
+		lblAvailable.setText(report.getTotalSpots() - report.getOccupied() + "");
 		lblReservations.setText(report.getpreOrderReservations() + "");
 
 		if (lblTotalParkings != null) {

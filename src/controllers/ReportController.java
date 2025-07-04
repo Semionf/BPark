@@ -13,13 +13,19 @@ import entities.ParkingReport;
 import server.DBController;
 
 /**
+ * ||in SERVER||
+ * 
  * ReportController handles report generation for the ParkB parking management
  * system. Updated to work with unified parkinginfo table structure
  */
-
 public class ReportController {
-//	protected Connection conn;
-	public int successFlag;
+
+	/**
+	 * Initializes the report controller and sets up the database connection.
+	 *
+	 * @param dbname the name of the database
+	 * @param pass   the password for the database user
+	 */
 
 	public ReportController(String dbname, String pass) {
 		DBController.initializeConnection(dbname, pass);
@@ -27,11 +33,11 @@ public class ReportController {
 	}
 
 	/**
-	 * Gets parking reports based on report type
-	 * 
-	 * @param reportType The type of report to generate ("PARKING_TIME" or
-	 *                   "SUBSCRIBER_STATUS")
-	 * @return ArrayList of ParkingReport objects
+	 * Retrieves parking reports based on the specified report type.
+	 *
+	 * @param reportType The type of report to generate ("PARKING_TIME",
+	 *                   "SUBSCRIBER_STATUS", or "ALL")
+	 * @return ArrayList of ParkingReport objects for the selected type(s)
 	 */
 	public ArrayList<ParkingReport> getParkingReports(String reportType) {
 		ArrayList<ParkingReport> reports = new ArrayList<>();
@@ -56,11 +62,13 @@ public class ReportController {
 	}
 
 	/**
-	 * Generates monthly reports automatically at the end of each month
-	 * 
-	 * @param monthYear Format: "YYYY-MM"
-	 * @return ArrayList of monthly reports
+	 * Generates and stores monthly reports for a given month and year.
+	 *
+	 * @param monthYear A string in the format "YYYY-MM" representing the target
+	 *                  month.
+	 * @return ArrayList of generated ParkingReport objects.
 	 */
+
 	public ArrayList<ParkingReport> generateMonthlyReports(String monthYear) {
 		ArrayList<ParkingReport> monthlyReports = new ArrayList<>();
 
@@ -95,8 +103,11 @@ public class ReportController {
 	}
 
 	/**
-	 * Generates a parking time report showing usage patterns, delays, and
-	 * extensions
+	 * Generates a current parking time report based on the last 30 days. Includes
+	 * statistics such as average duration, late exits, extensions, and usage
+	 * distributions.
+	 *
+	 * @return ParkingReport object populated with parking time metrics.
 	 */
 	private ParkingReport generateParkingTimeReport() {
 		ParkingReport report = new ParkingReport("PARKING_TIME", LocalDate.now());
@@ -124,6 +135,9 @@ public class ReportController {
 					report.setExtensions(rs.getInt("extensions"));
 					report.setMinParkingTime(rs.getInt("min_duration"));
 					report.setMaxParkingTime(rs.getInt("max_duration"));
+					report.setTotalSpots(getTotalSpots());
+					report.setOccupied(getOccupied());
+					report.setpreOrderReservations(getPreOrderedReservations());
 				}
 			}
 		} catch (SQLException e) {
@@ -144,12 +158,16 @@ public class ReportController {
 		report.getpreOrderReservations();
 		report.setpreOrderReservations(getPreOrderedReservations());
 		report.setOccupied(getOccupied());
+		report.setTotalSpots(getTotalSpots());
 		return report;
 	}
 
 	/**
-	 * Generates a subscriber status report showing subscriber activity and usage
-	 * patterns
+	 * Generates a current subscriber status report for the last 30 days. Includes
+	 * active subscribers, reservation types, session durations, and cancellation
+	 * stats.
+	 *
+	 * @return ParkingReport object populated with subscriber activity metrics.
 	 */
 	private ParkingReport generateSubscriberStatusReport() {
 		ParkingReport report = new ParkingReport("SUBSCRIBER_STATUS", LocalDate.now());
@@ -227,7 +245,11 @@ public class ReportController {
 	}
 
 	/**
-	 * Generates a monthly parking time report for a specific month
+	 * Generates a parking time report for a specific calendar month.
+	 *
+	 * @param reportDate A LocalDate representing the target month (1st day of the
+	 *                   month).
+	 * @return ParkingReport object for that month, or null if no data available.
 	 */
 	private ParkingReport generateMonthlyParkingTimeReport(LocalDate reportDate) {
 		ParkingReport report = new ParkingReport("PARKING_TIME", reportDate);
@@ -272,7 +294,11 @@ public class ReportController {
 	}
 
 	/**
-	 * Generates a monthly subscriber status report for a specific month
+	 * Generates a subscriber status report for a specific calendar month.
+	 *
+	 * @param reportDate A LocalDate representing the target month (1st day of the
+	 *                   month).
+	 * @return ParkingReport object for that month, or null if no data available.
 	 */
 	private ParkingReport generateMonthlySubscriberStatusReport(LocalDate reportDate) {
 		ParkingReport report = new ParkingReport("SUBSCRIBER_STATUS", reportDate);
@@ -354,7 +380,10 @@ public class ReportController {
 	}
 
 	/**
-	 * Stores monthly reports in the database
+	 * Stores a list of monthly reports in the database. Each report is saved with
+	 * its type and generation timestamp.
+	 *
+	 * @param reports List of ParkingReport objects to be saved.
 	 */
 	private void storeMonthlyReports(ArrayList<ParkingReport> reports) {
 		String qry = "INSERT INTO reports (Report_Type, Generated_Date, Report_Data) VALUES (?, NOW(), ?)";
@@ -375,7 +404,13 @@ public class ReportController {
 	}
 
 	/**
-	 * Gets historical reports from the database
+	 * Retrieves previously generated reports of a given type between specified
+	 * dates.
+	 *
+	 * @param reportType The report type ("PARKING_TIME" or "SUBSCRIBER_STATUS")
+	 * @param fromDate   Start date (inclusive) of the range
+	 * @param toDate     End date (inclusive) of the range
+	 * @return List of ParkingReport objects within the specified date range
 	 */
 	public ArrayList<ParkingReport> getHistoricalReports(String reportType, LocalDate fromDate, LocalDate toDate) {
 		ArrayList<ParkingReport> reports = new ArrayList<>();
@@ -416,83 +451,10 @@ public class ReportController {
 	}
 
 	/**
-	 * Gets peak usage hours for analysis
+	 * Calculates total parking time (in hours) per day for the current month.
+	 *
+	 * @return Map of date string to total hours of parking for that day
 	 */
-	public ArrayList<String> getPeakUsageHours() {
-		ArrayList<String> peakHours = new ArrayList<>();
-		Connection conn = DBController.getInstance().getConnection();
-
-		String qry = """
-				SELECT
-				    HOUR(Actual_start_time) as entry_hour,
-				    COUNT(*) as entry_count
-				FROM parkinginfo
-				WHERE Date_Of_Placing_Order >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-				AND Actual_start_time IS NOT NULL
-				GROUP BY HOUR(Actual_start_time)
-				ORDER BY entry_count DESC
-				LIMIT 5
-				""";
-
-		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-			try (ResultSet rs = stmt.executeQuery()) {
-				while (rs.next()) {
-					int hour = rs.getInt("entry_hour");
-					int count = rs.getInt("entry_count");
-					peakHours.add(String.format("%02d:00 - %d entries", hour, count));
-				}
-			}
-		} catch (SQLException e) {
-			System.out.println("Error getting peak usage hours: " + e.getMessage());
-		} finally {
-			DBController.getInstance().releaseConnection(conn);
-		}
-
-		return peakHours;
-	}
-
-	/**
-	 * Gets daily parking statistics for the current month
-	 */
-	public ArrayList<String> getDailyStatistics() {
-		ArrayList<String> dailyStats = new ArrayList<>();
-		Connection conn = DBController.getInstance().getConnection();
-
-		String qry = """
-				SELECT
-				    DATE(Date_Of_Placing_Order) as order_date,
-				    COUNT(*) as daily_entries,
-				    SUM(CASE WHEN IsLate = 'yes' THEN 1 ELSE 0 END) as daily_late_exits,
-				    AVG(TIMESTAMPDIFF(MINUTE, Actual_start_time, COALESCE(Actual_end_time, NOW()))) as avg_daily_duration
-				FROM parkinginfo
-				WHERE YEAR(Date_Of_Placing_Order) = YEAR(CURDATE())
-				AND MONTH(Date_Of_Placing_Order) = MONTH(CURDATE())
-				AND statusEnum IN ('active', 'finished')
-				GROUP BY DATE(Date_Of_Placing_Order)
-				ORDER BY order_date DESC
-				""";
-
-		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-			try (ResultSet rs = stmt.executeQuery()) {
-				while (rs.next()) {
-					String date = rs.getDate("order_date").toString();
-					int entries = rs.getInt("daily_entries");
-					int lateExits = rs.getInt("daily_late_exits");
-					double avgDuration = rs.getDouble("avg_daily_duration");
-
-					dailyStats.add(String.format("%s: %d entries, %d late exits, %.1f min avg duration", date, entries,
-							lateExits, avgDuration));
-				}
-			}
-		} catch (SQLException e) {
-			System.out.println("Error getting daily statistics: " + e.getMessage());
-		} finally {
-			DBController.getInstance().releaseConnection(conn);
-		}
-
-		return dailyStats;
-	}
-
 	private java.util.Map<String, Integer> getTotalParkingTimePerDay() {
 		java.util.Map<String, Integer> map = new TreeMap<>();
 		String qry = """
@@ -525,6 +487,12 @@ public class ReportController {
 		return map;
 	}
 
+	/**
+	 * Retrieves the number of parking sessions per hour (0–23) over finished
+	 * sessions.
+	 *
+	 * @return Map of hour strings ("HH:00") to entry counts
+	 */
 	private java.util.Map<String, Integer> getHourlyDistribution() {
 		java.util.Map<String, Integer> map = new TreeMap<>();
 		String qry = """
@@ -552,6 +520,11 @@ public class ReportController {
 		return map;
 	}
 
+	/**
+	 * Retrieves a breakdown of late exits per hour of the day.
+	 *
+	 * @return Map of hour strings ("HH:00") to late exit counts
+	 */
 	private java.util.Map<String, Integer> getLateExitsByHour() {
 		java.util.Map<String, Integer> map = new TreeMap<>();
 		String qry = """
@@ -578,6 +551,12 @@ public class ReportController {
 		return map;
 	}
 
+	/**
+	 * Retrieves the number of unique subscribers per day in recent parking
+	 * sessions.
+	 *
+	 * @return Map of date strings to unique subscriber counts
+	 */
 	private java.util.Map<String, Integer> getSubscribersPerDay() {
 		java.util.Map<String, Integer> map = new TreeMap<>();
 		String qry = """
@@ -605,6 +584,11 @@ public class ReportController {
 		return map;
 	}
 
+	/**
+	 * Counts how many parking sessions were completed without extensions.
+	 *
+	 * @return Number of sessions without extensions
+	 */
 	private int getNoExtensions() {
 		String qry = """
 				    SELECT COUNT(*) as noext
@@ -627,6 +611,11 @@ public class ReportController {
 		return 0;
 	}
 
+	/**
+	 * Counts how many distinct users have at least one late exit.
+	 *
+	 * @return Number of late subscribers
+	 */
 	private int getLateSubscribers() {
 		String qry = """
 				    SELECT COUNT(DISTINCT User_ID) as cnt
@@ -648,6 +637,11 @@ public class ReportController {
 		return 0;
 	}
 
+	/**
+	 * Returns the total number of users in the system.
+	 *
+	 * @return Total user count
+	 */
 	private int getTotalSubscribers() {
 		String qry = "SELECT COUNT(*) as cnt FROM users";
 		Connection conn = DBController.getInstance().getConnection();
@@ -665,6 +659,12 @@ public class ReportController {
 		return 0;
 	}
 
+	/**
+	 * Returns the number of used reservations (finished and ordered) from the last
+	 * 30 days.
+	 *
+	 * @return Number of used reservations
+	 */
 	public int getUsedReservations() {
 		int result = 0; // usedReservations
 		Connection conn = DBController.getInstance().getConnection();
@@ -696,6 +696,11 @@ public class ReportController {
 		return result;
 	}
 
+	/**
+	 * Returns the number of reservations that were cancelled in the last 30 days.
+	 *
+	 * @return Number of cancelled reservations
+	 */
 	public int getCancelledReservations() {
 		int result = 0; // cancelledReservations
 		Connection conn = DBController.getInstance().getConnection();
@@ -725,6 +730,11 @@ public class ReportController {
 		return result;
 	}
 
+	/**
+	 * Returns the number of reservations that are currently in 'preorder' status.
+	 *
+	 * @return Number of pre-ordered reservations
+	 */
 	public int getPreOrderedReservations() {
 		int result = 0; // cancelledReservations
 		Connection conn = DBController.getInstance().getConnection();
@@ -754,25 +764,59 @@ public class ReportController {
 		return result;
 	}
 
+	/**
+	 * Counts the number of currently occupied parking spots.
+	 *
+	 * @return Number of occupied parking spots
+	 */
 	private int getOccupied() {
 		String qry = """
-				    SELECT ParkingSpot_ID as cnt
+				    SELECT COUNT(*) AS cnt
 				    FROM parkingspot
 				    WHERE isOccupied = '1'
 				""";
+
+		int result = 0;
 		Connection conn = DBController.getInstance().getConnection();
-		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					return rs.getInt("cnt");
-				}
+
+		try (PreparedStatement stmt = conn.prepareStatement(qry); ResultSet rs = stmt.executeQuery()) {
+
+			if (rs.next()) {
+				result = rs.getInt("cnt"); // או rs.getInt(1)
 			}
+
 		} catch (SQLException e) {
-			System.out.println("Error: " + e.getMessage());
+			e.printStackTrace();
 		} finally {
 			DBController.getInstance().releaseConnection(conn);
 		}
-		return 0;
+
+		return result;
+	}
+
+	/**
+	 * Retrieves the total number of parking spots available in the system.
+	 *
+	 * Executes a SQL query on the 'parkingspot' table to count all defined parking
+	 * spots, regardless of their status (occupied, free, reserved, etc.).
+	 *
+	 * @return The total number of parking spots in the database. Returns 0 if a
+	 *         database error occurs.
+	 */
+	private int getTotalSpots() {
+		String sql = "SELECT COUNT(*) FROM parkingspot";
+		int result = 0;
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
+			if (rs.next()) {
+				result = rs.getInt(1);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return result;
 	}
 
 }

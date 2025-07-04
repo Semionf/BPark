@@ -28,54 +28,86 @@ import javafx.util.Duration;
  * ||in CLIENT||
  *
  * Controller class for the Attendant Dashboard in the BPARK client application.
- * Handles active parking management, subscriber registration, and real-time updates.
- * Communicates with the server via BParkClientApp messaging.
+ * Handles active parking management, subscriber registration, and real-time
+ * updates. Communicates with the server via BParkClientApp messaging.
  */
 public class AttendantController implements Initializable {
 
-    // ====== Registration Fields ======
-    @FXML private TextField txtName;
-    @FXML private TextField txtPhone;
-    @FXML private TextField txtEmail;
-    @FXML private TextField txtCarNumber;
-    @FXML private TextField txtUsername;
-    @FXML private Label lblRegistrationStatus;
-    @FXML private Button btnLogout;
+	// ====== Registration Fields ======
+	@FXML
+	private TextField txtName;
+	@FXML
+	private TextField txtPhone;
+	@FXML
+	private TextField txtEmail;
+	@FXML
+	private TextField txtCarNumber;
+	@FXML
+	private TextField txtUsername;
+	@FXML
+	private Label lblRegistrationStatus;
+	@FXML
+	private Button btnLogout;
 
-    // ====== Active Parking Table ======
-    @FXML private TableView<ParkingOrder> tableActiveParkings;
-    @FXML private TableColumn<ParkingOrder, String> colParkingCode;
-    @FXML private TableColumn<ParkingOrder, String> colSubscriberName;
-    @FXML private TableColumn<ParkingOrder, String> colSpot;
-    @FXML private TableColumn<ParkingOrder, String> colEntryTime;
-    @FXML private TableColumn<ParkingOrder, String> colExpectedExit;
-    @FXML private TableColumn<ParkingOrder, String> colType;
-    @FXML private TableColumn<ParkingOrder, String> colCode;
+	// ====== Active Parking Table ======
+	@FXML
+	private TableView<ParkingOrder> tableActiveParkings;
+	@FXML
+	private TableColumn<ParkingOrder, String> colParkingCode;
+	@FXML
+	private TableColumn<ParkingOrder, String> colSubscriberName;
+	@FXML
+	private TableColumn<ParkingOrder, String> colSpot;
+	@FXML
+	private TableColumn<ParkingOrder, String> colEntryTime;
+	@FXML
+	private TableColumn<ParkingOrder, String> colExpectedExit;
+	@FXML
+	private TableColumn<ParkingOrder, String> colType;
+	@FXML
+	private TableColumn<ParkingOrder, String> colCode;
 
-    // ====== Subscribers Table ======
-    @FXML private TableView<ParkingSubscriber> tableSubscribers;
-    @FXML private TableColumn<ParkingSubscriber, String> colSubName;
-    @FXML private TableColumn<ParkingSubscriber, String> colSubPhone;
-    @FXML private TableColumn<ParkingSubscriber, String> colSubEmail;
-    @FXML private TableColumn<ParkingSubscriber, String> colSubCar;
-    @FXML private TableColumn<ParkingSubscriber, String> colSubUsername;
+	// ====== Subscribers Table ======
+	@FXML
+	private TableView<ParkingSubscriber> tableSubscribers;
+	@FXML
+	private TableColumn<ParkingSubscriber, String> colSubName;
+	@FXML
+	private TableColumn<ParkingSubscriber, String> colSubPhone;
+	@FXML
+	private TableColumn<ParkingSubscriber, String> colSubEmail;
+	@FXML
+	private TableColumn<ParkingSubscriber, String> colSubCar;
+	@FXML
+	private TableColumn<ParkingSubscriber, String> colSubUsername;
 
-    // ====== System Status ======
-    @FXML private Label lblParkingStatus;
-    @FXML private Label lblAttendantInfo;
+	// ====== System Status ======
+	@FXML
+	private Label lblParkingStatus;
+	@FXML
+	private Label lblAttendantInfo;
 
 	private ObservableList<ParkingOrder> activeParkings = FXCollections.observableArrayList();
 
-    /**
-     * Sets the logged-in user's name on the dashboard.
-     * @param userName The name of the logged-in attendant.
-     */
+	/**
+	 * Updates the UI to display the logged-in attendant's name.
+	 *
+	 * @param userName The name of the logged-in user.
+	 */
 	public void setUserName(String userName) {
 		if (lblAttendantInfo != null) {
 			lblAttendantInfo.setText("Attendant: " + userName);
 		}
 	}
 
+	/**
+	 * Initializes the controller after its root element has been completely
+	 * processed. Sets up UI bindings and triggers initial data loading.
+	 *
+	 * @param location  The location used to resolve relative paths for the root
+	 *                  object.
+	 * @param resources The resources used to localize the root object.
+	 */
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		BParkClientApp.setAttendantController(this);
@@ -85,7 +117,8 @@ public class AttendantController implements Initializable {
 	}
 
 	/**
-	 * Initializes the UI elements and auto-refresh behavior.
+	 * Configures UI bindings, table column factories, and starts auto-refresh for
+	 * active parking data.
 	 */
 	private void setupUI() {
 		if (tableActiveParkings != null) {
@@ -106,7 +139,8 @@ public class AttendantController implements Initializable {
 	}
 
 	/**
-	 * Configures the table columns to map data from ParkingOrder.
+	 * Sets up the cell value factories for the active parkings table columns. Maps
+	 * data fields from ParkingOrder entity to respective table columns.
 	 */
 	private void setupTableColumns() {
 		colParkingCode.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getParkingCode()));
@@ -122,7 +156,7 @@ public class AttendantController implements Initializable {
 	}
 
 	/**
-	 * Starts a 30-second auto-refresh loop for the active parking list.
+	 * Starts a timeline that refreshes the active parking list every 30 seconds.
 	 */
 	private void startAutoRefresh() {
 		Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(30), event -> loadActiveParkings()));
@@ -131,9 +165,11 @@ public class AttendantController implements Initializable {
 	}
 
 	/**
-	 * Updates the active parking list and label.
+	 * Updates the list of currently active parkings and refreshes the parking
+	 * status label.
 	 *
-	 * @param parkings Observable list of ParkingOrder to display.
+	 * @param parkings An observable list of ParkingOrder objects to populate the
+	 *                 table.
 	 */
 	public void updateActiveParkings(ObservableList<ParkingOrder> parkings) {
 		this.activeParkings.clear();
@@ -147,9 +183,9 @@ public class AttendantController implements Initializable {
 	}
 
 	/**
-	 * Updates the subscribers table with the given list.
+	 * Updates the subscriber table with the given list of subscribers.
 	 *
-	 * @param subscribers List of ParkingSubscriber.
+	 * @param subscribers List of ParkingSubscriber objects.
 	 */
 	public void updateSubscriberTable(java.util.List<ParkingSubscriber> subscribers) {
 		Platform.runLater(() -> {

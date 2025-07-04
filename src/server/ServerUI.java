@@ -14,9 +14,7 @@ import serverGUI.ServerPortFrame;
  * The server GUI allows the user to specify the port and start the server. This
  * class also provides a static method for running the server headlessly with a
  * given port.
- * 
- * @author Yair
- * @version 1.0
+
  */
 public class ServerUI extends Application {
 
