@@ -35,7 +35,6 @@ public class ExtendParkingController {
     
     /**
      * ComboBox for selecting the number of hours to extend the parking.
-     * Possible values: "1", "2", "3", "4".
      */
     @FXML private ComboBox<String> hoursCombo;
     

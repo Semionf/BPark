@@ -78,7 +78,7 @@ public class SubscriberController implements Initializable {
     /** Called when the controller is loaded. Sets up the UI. */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-    	     
+    	setupUIreservation();
     }
     
     /** Sets the label with the current user's name. */

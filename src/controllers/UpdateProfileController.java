@@ -29,19 +29,19 @@ public class UpdateProfileController{
 	public static UpdateProfileController instance;
 	
 	 /**
-     * Text field where the user enters or updates their email address.
+     * Text field where the user can enters or updates their email address.
      */
     @FXML
     private TextField emailField;
     
     /**
-     * Text field where the user enters or updates their phone number.
+     * Text field where the user can enters or updates their phone number.
      */
     @FXML
     private TextField phoneField;
     
     /**
-     * Text field where the user enters or updates their car number.
+     * Text field where the user can enters or updates their car number.
      */
     @FXML
     private TextField carNumberField;

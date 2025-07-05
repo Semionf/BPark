@@ -29,10 +29,13 @@ public class LoginController implements Initializable {
     
     /** Text field for entering the subscriber's user code */
     @FXML private TextField txtUsercode;
+    
     /** Text field for entering the server's IP address. */
     @FXML private TextField txtServerIP;
+    
     /** Button that triggers the login process. */
     @FXML private Button btnLogin;
+    
     /** Label used to display status message. */
     @FXML private Label lblStatus;
     
