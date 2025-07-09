@@ -116,6 +116,10 @@ public class ClientMessageHandler {
 			handleExtendParkingResponse(message);
 			break;
 
+		case EXIT_PARKING_RESPONSE:
+			handleExitParkingResponse(message);
+			break;
+
 		case SHOW_SUBSCRIBER_DETAILS:
 			ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
 			Platform.runLater(() -> {
@@ -191,6 +195,7 @@ public class ClientMessageHandler {
 
 		if (subscriber != null) {
 			BParkClientScenes.setCurrentUser(subscriber.getSubscriberCode());
+			BParkClientScenes.setCurrentUserID(subscriber.getSubscriberID());
 			BParkClientScenes.setUserType(subscriber.getUserType());
 			BParkClientScenes.switchToMainScreen(subscriber.getUserType());
 
@@ -451,6 +456,22 @@ public class ClientMessageHandler {
 			if (controller != null) {
 				controller.setStatusMessage(response, "red");
 			}
+		}
+	}
+
+	/**
+	 * Handles the response message received after a parking exit attempt.
+	 * Displays an alert to the user indicating whether the exit was successful or not,
+	 * based on the message content.
+	 *
+	 * @param message the message containing the server's response to the exit attempt
+	 */
+	private static void handleExitParkingResponse(Message message) {
+		String response = (String) message.getContent();
+		if (response.contains("Exit successful") || response.contains("Thank you")) {
+			showAlert("Exit Successful", response);
+		} else {
+			showAlert("Exit Failed", response);
 		}
 	}
 

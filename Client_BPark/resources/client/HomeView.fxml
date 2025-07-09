@@ -23,7 +23,7 @@
     <!-- Logo (moved below text and enlarged) -->
     <ImageView fitWidth="450" preserveRatio="true">
         <image>
-            <Image url="@/images/BparkImage.png" />
+            <Image url="@../images/BparkImage.png" />
         </image>
     </ImageView>
 

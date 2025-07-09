@@ -32,6 +32,13 @@ public class BParkClientScenes {
 	 * The currently logged-in user's username.
 	 */
 	private static String currentUser;
+
+	/**
+	 * A static field that holds the ID of the currently active user. Used to
+	 * identify which user is currently logged into the system.
+	 */
+	private static int currentUserID;
+
 	/**
 	 * The type of the currently logged-in user ("sub", "emp", "mng").
 	 */
@@ -198,6 +205,24 @@ public class BParkClientScenes {
 	}
 
 	/**
+	 * Returns the ID of the currently active user.
+	 *
+	 * @return the current user's ID
+	 */
+	public static int getCurrentUserID() {
+		return currentUserID;
+	}
+
+	/**
+	 * Sets the ID of the currently active user.
+	 *
+	 * @param userID the ID to set as the current user
+	 */
+	public static void setCurrentUserID(int userID) {
+		currentUserID = userID;
+	}
+
+	/**
 	 * Gets the current user's type.
 	 *
 	 * @return The user type ("sub", "emp", or "mng").
@@ -282,6 +307,7 @@ public class BParkClientScenes {
 
 			// Clear current user data
 			currentUser = null;
+			currentUserID = 0;
 			userType = null;
 
 //			// Reconnect to server for next login

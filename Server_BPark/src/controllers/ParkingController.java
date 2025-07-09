@@ -643,6 +643,7 @@ public class ParkingController {
 	public String cancelReservation(int reservationCode) {
 		return cancelReservationInternal(reservationCode, "User requested cancellation");
 	}
+	
 
 	/**
 	 * Cancels a reservation by subscriber and code (used when an attendant cancels
@@ -653,6 +654,23 @@ public class ParkingController {
 	 * @return result message indicating success or failure
 	 */
 	public String cancelReservation(String subscriberUserName, int reservationCode) {
+		return cancelReservationInternal(reservationCode, "User requested cancellation");
+	}
+	
+	/**
+	 * Cancels a parking reservation if the given user is the owner of the reservation.
+	 * First checks whether the reservation belongs to the user, and if so, proceeds with the cancellation.
+	 *
+	 * @param reservationCode the unique code identifying the reservation
+	 * @param userID the ID of the user requesting the cancellation
+	 * @return a message indicating whether the cancellation was successful or access was denied
+	 */
+	public String cancelReservation(int reservationCode, int userID) {
+		// Validate parking order ownership
+		if (!validateParkingOrderOwnership(reservationCode, userID)) {
+			return "Access denied: This reservation does not belong to your account.";
+		}
+
 		return cancelReservationInternal(reservationCode, "User requested cancellation");
 	}
 
@@ -941,6 +959,34 @@ public class ParkingController {
 		}
 		return "Invalid parking code or already exited";
 	}
+	
+	/**
+	 * Handles the user's request to exit the parking lot by validating the parking code 
+	 * and ownership. If the code is valid and belongs to the user, proceeds to call the 
+	 * original exit method.
+	 *
+	 * @param parkingCodeStr the parking code as a string input from the user
+	 * @param userID the ID of the user attempting to exit
+	 * @return a message indicating the result of the exit attempt:
+	 *         - success message from the original method,
+	 *         - access denied if ownership check fails,
+	 *         - or an error message if the parking code format is invalid
+	 */
+	public String exitParking(String parkingCodeStr, int userID) {
+		try {
+			int parkingCode = Integer.parseInt(parkingCodeStr);
+
+			// Validate parking order ownership
+			if (!validateParkingOrderOwnership(parkingCode, userID)) {
+				return "Access denied: This parking session does not belong to your account.";
+			}
+
+			// Call the original method if validation passes
+			return exitParking(parkingCodeStr);
+		} catch (NumberFormatException e) {
+			return "Invalid parking code format";
+		}
+	}
 
 	/**
 	 * Extends an active parking session by a specified number of hours. Only one
@@ -1040,6 +1086,34 @@ public class ParkingController {
 		}
 
 		return "Invalid parking code or parking session not active.";
+	}
+	
+	/**
+	 * Extends a parking session if the user owns it and the number of hours is valid.
+	 *
+	 * @param parkingCodeStr the parking code as a string
+	 * @param additionalHours number of hours to add
+	 * @param userID the user's ID
+	 * @return a message with the result (success, error, or access denied)
+	 */
+	public String extendParkingTime(String parkingCodeStr, int additionalHours, int userID) {
+		if (additionalHours < MIN_EXTENSION_HOURS || additionalHours > MAX_EXTENSION_HOURS) {
+			return "Can only extend parking by " + MIN_EXTENSION_HOURS + "-" + MAX_EXTENSION_HOURS + " hours.";
+		}
+
+		try {
+			int parkingCode = Integer.parseInt(parkingCodeStr);
+
+			// Validate parking order ownership
+			if (!validateParkingOrderOwnership(parkingCode, userID)) {
+				return "Access denied: This parking order does not belong to your account.";
+			}
+
+			// Call the original method if validation passes
+			return extendParkingTime(parkingCodeStr, additionalHours);
+		} catch (NumberFormatException e) {
+			return "Invalid parking code format.";
+		}
 	}
 
 	// ========== PARKING QUERIES ==========
@@ -1707,6 +1781,37 @@ public class ParkingController {
 		}
 		return false;
 	}
+	
+	/**
+	 * Validate that a parking order belongs to the specified user
+	 * @param parkingInfoID The parking order ID
+	 * @param userID The user ID to validate ownership
+	 * @return true if the parking order belongs to the user, false otherwise
+	 */
+	public boolean validateParkingOrderOwnership(int parkingInfoID, int userID) {
+		String qry = "SELECT COUNT(*) FROM parkinginfo WHERE ParkingInfo_ID = ? AND User_ID = ?";
+		Connection conn = DBController.getInstance().getConnection();
+
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			stmt.setInt(1, parkingInfoID);
+			stmt.setInt(2, userID);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					boolean isOwner = rs.getInt(1) > 0;
+					if (!isOwner) {
+						System.out.println("Security Alert: User " + userID + " attempted to access parking order " + parkingInfoID + " without authorization");
+					}
+					return isOwner;
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error validating parking order ownership: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return false;
+	}
+
 
 	/**
 	 * Retrieves the user's full name by matching both username and user ID.

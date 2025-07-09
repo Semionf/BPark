@@ -92,7 +92,15 @@ public class ExtendParkingController {
 			return;
 		}
 
-		String extensionData = code + "," + hours;
+		   // Get current user ID for validation
+        int userID = BParkClientScenes.getCurrentUserID();
+        if (userID == 0) {
+            statusLabel.setText("Error: User not logged in properly.");
+            return;
+        }
+
+        // New format: parkingCode,hours,userID (with validation)
+        String extensionData = code + "," + hours + "," + userID;
 		// Create and send the extension request message
 		Message msg = new Message(MessageType.REQUEST_EXTENSION, extensionData);
 		BParkClientScenes.sendMessage(msg);

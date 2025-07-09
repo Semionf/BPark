@@ -38,8 +38,8 @@
 					onAction="#handleGenerateReports" styleClass="report-button" />
 				<Button fx:id="btnLogout" text="Logout"
 					onAction="#handleLogout" styleClass="logout-button" />
-				<Button fx:id="btnExit" text="Exit"
-					onAction="#handleExit" styleClass="exit-button" />
+				<Button fx:id="btnExit" text="Exit" onAction="#handleExit"
+					styleClass="exit-button" />
 			</HBox>
 		</VBox>
 	</top>
@@ -57,15 +57,15 @@
 						</padding>
 
 						<!-- Key Metrics -->
-						<StackPane alignment="CENTER">
+						<StackPane alignment="CENTER" VBox.vgrow="ALWAYS">
 							<GridPane hgap="30" vgap="30" alignment="CENTER">
 								<columnConstraints>
-									<ColumnConstraints halignment="CENTER" />
-									<ColumnConstraints halignment="CENTER" />
+									<ColumnConstraints percentWidth="50" />
+									<ColumnConstraints percentWidth="50" />
 								</columnConstraints>
 								<rowConstraints>
-									<RowConstraints valignment="CENTER" />
-									<RowConstraints valignment="CENTER" />
+									<RowConstraints percentHeight="50" />
+									<RowConstraints percentHeight="50" />
 								</rowConstraints>
 
 								<!-- Total Spots -->
@@ -78,9 +78,10 @@
 										<Insets bottom="15.0" left="15.0" right="15.0"
 											top="15.0" />
 									</padding>
-									<Label text="Total Spots" style="-fx-text-fill: #7F8C8D;" />
+									<Label text="Total Spots"
+										style="-fx-text-fill: #7F8C8D; -fx-font-size: 20px;" />
 									<Label fx:id="lblTotalSpots" text="--"
-										style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #2C3E50;" />
+										style="-fx-font-size: 55px; -fx-font-weight: bold; -fx-text-fill: #2C3E50;" />
 								</VBox>
 
 								<!-- Occupied -->
@@ -93,9 +94,10 @@
 										<Insets bottom="15.0" left="15.0" right="15.0"
 											top="15.0" />
 									</padding>
-									<Label text="Occupied" style="-fx-text-fill: #7F8C8D;" />
+									<Label text="Occupied"
+										style="-fx-text-fill: #7F8C8D; -fx-font-size: 20px;" />
 									<Label fx:id="lblOccupied" text="--"
-										style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #E74C3C;" />
+										style="-fx-font-size: 55px; -fx-font-weight: bold; -fx-text-fill: #E74C3C;" />
 								</VBox>
 
 								<!-- Available -->
@@ -108,9 +110,10 @@
 										<Insets bottom="15.0" left="15.0" right="15.0"
 											top="15.0" />
 									</padding>
-									<Label text="Available" style="-fx-text-fill: #7F8C8D;" />
+									<Label text="Available"
+										style="-fx-text-fill: #7F8C8D; -fx-font-size: 20px;" />
 									<Label fx:id="lblAvailable" text="--"
-										style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #27AE60;" />
+										style="-fx-font-size: 55px; -fx-font-weight: bold; -fx-text-fill: #27AE60;" />
 								</VBox>
 
 								<!-- Active Reservations -->
@@ -124,9 +127,9 @@
 											top="15.0" />
 									</padding>
 									<Label text="Active Reservations"
-										style="-fx-text-fill: #7F8C8D;" />
+										style="-fx-text-fill: #7F8C8D;  -fx-font-size: 20px;" />
 									<Label fx:id="lblReservations" text="--"
-										style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #3498DB;" />
+										style="-fx-font-size: 55px; -fx-font-weight: bold; -fx-text-fill: #3498DB;" />
 								</VBox>
 
 							</GridPane>
@@ -369,20 +372,26 @@
 
 
 			<Tab text="Subscriber History">
-				<AnchorPane>
-					<VBox spacing="10" alignment="CENTER" layoutX="0" layoutY="0"
+				<StackPane>
+					<VBox spacing="20" alignment="CENTER" layoutX="0" layoutY="0"
 						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+						<StackPane.margin>
+							<Insets top="0" right="0" bottom="100" left="0" />
+						</StackPane.margin>
 						<Label text="Enter User Name:"
-							style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+							style="-fx-font-size: 40px; -fx-font-weight: bold;" />
 						<HBox spacing="10" alignment="CENTER">
+
 							<TextField fx:id="subscriberIdField"
-								promptText="Enter User Name..." />
+								promptText="Enter User Name..." prefWidth="500" prefHeight="45"
+								style="-fx-font-size: 16px;" />
+
 							<Button fx:id="btnViewHistory" text="Enter"
 								onAction="#handleSubscriberIdEnter" minWidth="80"
-								prefWidth="100" maxWidth="120" style="-fx-font-size: 13px;" />
+								prefWidth="150" maxWidth="170" style="-fx-font-size: 13px;" />
 						</HBox>
 					</VBox>
-				</AnchorPane>
+				</StackPane>
 			</Tab>
 
 		</TabPane>
